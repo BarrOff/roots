@@ -1,0 +1,8 @@
+# TeX/LaTeX intermediates # 
+########################### 
+*.*~ 
+*.log 
+*.tmp 
+*.out 
+*.swp
+tags
