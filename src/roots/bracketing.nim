@@ -24,7 +24,6 @@ proc ipzero[T, S: SomeFloat](a, b, c, d: T, fa, fb, fc, fd: S, delta: T = T(0.0)
 proc newtonQuadratic[T, S: SomeFloat, R: SomeInteger](a, b, d: T, fa, fb, fd: S, k: R, delta: T = T(0.0)): T
 
 
-proc logStep*[T, S: SomeFloat, A: AbstractBracketing](l: Tracks[T, S], M: A, state: UnivariateZeroState[T, S]) =
 proc logStep*[T, S: SomeFloat, A: Bisection|BisectionExact](l: Tracks[T, S], M: A, state: UnivariateZeroState[T, S]) =
   add(l.xs, state.xn0)
   add(l.xs, state.xn1)
@@ -329,7 +328,6 @@ proc findZero*[T, S: SomeFloat, A: AbstractBracketing, AT: Tracks[T, S] or NullT
 
     new(l)
     if iszeroTol:
-      let M: A42 = new(A42)
       let M: A42 = A42()
       return findZero(F, x, M, l, verbose)
 
@@ -346,7 +344,6 @@ proc findZero*[T, S: SomeFloat, A: AbstractBracketing, AT: Tracks[T, S] or NullT
       l = tracks
 
     if iszeroTol:
-      let M: A42 = new(A42)
       let M: A42 = A42()
       return findZero(F, x, M, l, verbose)
 
@@ -383,7 +380,6 @@ proc findZero*[T, S: SomeFloat, A: AbstractBracketing, AT: Tracks[T, S] or NullT
 
     new(l)
     if iszeroTol:
-      let M: A42 = new(A42)
       let M: A42 = A42()
       return findZero(F, x, M, l, verbose)
 
@@ -400,7 +396,6 @@ proc findZero*[T, S: SomeFloat, A: AbstractBracketing, AT: Tracks[T, S] or NullT
       l = tracks
 
     if iszeroTol:
-      let M: A42 = new(A42)
       let M: A42 = A42()
       return findZero(F, x, M, l, verbose)
 
@@ -936,7 +931,6 @@ proc runBisection*[T, S](f: proc(a: T): S, xs: (T, T),
 # Main method
 # return a zero or NaN.
 ## Updates state, could be `find_zero!(state, M, F, options, l)...
-proc findZero[T, S: SomeFloat, A: AbstractUnivariateZeroMethod, CF: CallableFunction](M: A, F: CF, options: UnivariateZeroOptions[T, T, S, S], state: UnivariateZeroState[T, S], l: Tracks[T, S]|NullTracks = NullTracks()): T =
 proc findZero*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod, CF: CallableFunction](M: A, F: CF, options: UnivariateZeroOptions[T, T, S, S], state: UnivariateZeroState[T, S], l: Tracks[T, S]|NullTracks = NullTracks()): T =
   when l is NullTracks:
     logStep(l)
@@ -968,12 +962,10 @@ proc findZero*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod, CF: CallableFun
 # * limit steps so as not too far or too near the previous one
 # * if not decreasing, use a quad step upto 4 times to bounce out of trap, if possible
 # First uses M, then N if bracket is identified
-proc findZero[T, S: SomeFloat, AM, AN: AbstractUnivariateZeroMethod, CF: CallableFunction](M: AM, N: AN, F: CF, options: UnivariateZeroOptions[T, T, S, S], state: UnivariateZeroState[T, S], l: Tracks[T, S]|NullTracks = NullTracks()) =
 proc findZero*[T, S: SomeFloat, AM, AN: AbstractUnivariateZeroMethod, CF: CallableFunction](M: AM, N: AN, F: CF, options: UnivariateZeroOptions[T, T, S, S], state: UnivariateZeroState[T, S], l: Tracks[T, S]|NullTracks = NullTracks()) =
   when l is NullTracks:
     logStep(l)
   elif M is AbstractAlefeldPotraShi:
-    logStep(l, M, state, 1)
     logStep(l, M, state)
   else:
     logStep(l, true, state, 1)
