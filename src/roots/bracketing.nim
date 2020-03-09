@@ -330,6 +330,7 @@ proc findZero*[T, S: SomeFloat, A: AbstractBracketing, AT: Tracks[T, S] or NullT
     new(l)
     if iszeroTol:
       let M: A42 = new(A42)
+      let M: A42 = A42()
       return findZero(F, x, M, l, verbose)
 
     discard findZero(methods, F, options, state, l)
@@ -346,6 +347,7 @@ proc findZero*[T, S: SomeFloat, A: AbstractBracketing, AT: Tracks[T, S] or NullT
 
     if iszeroTol:
       let M: A42 = new(A42)
+      let M: A42 = A42()
       return findZero(F, x, M, l, verbose)
 
     discard findZero(methods, F, options, state, l)
@@ -382,6 +384,7 @@ proc findZero*[T, S: SomeFloat, A: AbstractBracketing, AT: Tracks[T, S] or NullT
     new(l)
     if iszeroTol:
       let M: A42 = new(A42)
+      let M: A42 = A42()
       return findZero(F, x, M, l, verbose)
 
     discard findZero(methods, F, options, state, l)
@@ -398,6 +401,7 @@ proc findZero*[T, S: SomeFloat, A: AbstractBracketing, AT: Tracks[T, S] or NullT
 
     if iszeroTol:
       let M: A42 = new(A42)
+      let M: A42 = A42()
       return findZero(F, x, M, l, verbose)
 
     discard findZero(methods, F, options, state, l)
