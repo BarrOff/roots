@@ -3,6 +3,7 @@ import math
 type
   # Methods
   AbstractUnivariateZeroMethod* = object of RootObj
+  NoMethod* = object of AbstractUnivariateZeroMethod
   AbstractBracketing* = object of AbstractUnivariateZeroMethod
   AbstractNonBracketing* = object of AbstractUnivariateZeroMethod
   AbstractSecant* = object of AbstractNonBracketing
@@ -400,7 +401,7 @@ proc assessConvergence*[T, S: SomeFloat](methodes: bool, state: UnivariateZeroSt
 
   return false
 
-proc showTrace*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod, B: AbstractBracketing](methodes: A, N: B, state: UnivariateZeroState[T, S], tracks: Tracks[T, S]) =
+proc showTrace*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod, B: AbstractBracketing](methodes: A, N: B = NoMethod(), state: UnivariateZeroState[T, S], tracks: Tracks[T, S]) =
   let
     converged = state.xConverged or state.fConverged
 
@@ -408,7 +409,7 @@ proc showTrace*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod, B: AbstractBra
 
   if converged:
     echo "* Converged to: ", state.xn1
-    if N == nil and methodes of AbstractBracketing:
+    if typeof(N) is NoMethod and methodes of AbstractBracketing:
       echo "* Algorithm: "#, $(methodes)
     else:
       echo "* Algorithm: ", " with possible bracketing with "#, $(N) #$(methodes),
@@ -435,7 +436,7 @@ proc showTrace*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod, B: AbstractBra
 # find_zero(fs, x0, method; kwargs...)
 
 # Interface to one of several methods for find zeros of a univariate function.
-proc findZero*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod, B: AbstractBracketing, CF: CallableFunction or proc(a: T): S](fs: CF, x0: T, methodes: A, N: B = nil, tracks: Tracks[T, S]|NullTracks = NullTracks(), verbose = false, kwargs: varargs[UnivariateZeroOptions[T, T, S, S]]): T =
+proc findZero*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod, B: AbstractBracketing, CF: CallableFunction or proc(a: T): S](fs: CF, x0: T, methodes: A, N: B = NoMethod(), tracks: Tracks[T, S]|NullTracks = NullTracks(), verbose = false, kwargs: varargs[UnivariateZeroOptions[T, T, S, S]]): T =
   let
     F = callable_functions(fs)
     state = initState2(methodes, fs, x0)
@@ -453,7 +454,7 @@ proc findZero*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod, B: AbstractBrac
     var
       l: Tracks[T, S]
     new(l)
-    if N == nil or methodes of AbstractBracketing:
+    if typeof(N) is NoMethod or methodes of AbstractBracketing:
         xstar = findZero(methodes, F, options, state, l)
     else:
         xstar = findZero(methodes, N, F, options, state, l)
@@ -469,7 +470,7 @@ proc findZero*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod, B: AbstractBrac
   else:
     let
       l = tracks
-    if N == nil or methodes of AbstractBracketing:
+    if typeof(N) is NoMethod or methodes of AbstractBracketing:
         xstar = findZero(methodes, F, options, state, l)
     else:
         xstar = findZero(methodes, N, F, options, state, l)
