@@ -2,10 +2,10 @@ import math
 
 type
   # Methods
-  AbstractUnivariateZeroMethod* = ref object of RootObj
-  AbstractBracketing* = ref object of AbstractUnivariateZeroMethod
-  AbstractNonBracketing* = ref object of AbstractUnivariateZeroMethod
-  AbstractSecant* = ref object of AbstractNonBracketing
+  AbstractUnivariateZeroMethod* = object of RootObj
+  AbstractBracketing* = object of AbstractUnivariateZeroMethod
+  AbstractNonBracketing* = object of AbstractUnivariateZeroMethod
+  AbstractSecant* = object of AbstractNonBracketing
 
   # States
   AbstractUnivariateZeroState* = ref object of RootObj

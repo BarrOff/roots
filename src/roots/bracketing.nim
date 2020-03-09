@@ -4,12 +4,12 @@ import utils, findZero
   # types needed for bracketing
 type
   InitialValueError* = object of Exception
-  AbstractBisection* = ref object of  AbstractBracketing
-  Bisection* = ref object of AbstractBisection
-  BisectionExact* = ref object of AbstractBisection
-  AbstractAlefeldPotraShi* = ref object of AbstractBracketing
-  A42* = ref object of AbstractAlefeldPotraShi
-  AlefeldPotraShi* = ref object of AbstractAlefeldPotraShi
+  AbstractBisection* = object of  AbstractBracketing
+  Bisection* = object of AbstractBisection
+  BisectionExact* = object of AbstractBisection
+  AbstractAlefeldPotraShi* = object of AbstractBracketing
+  A42* = object of AbstractAlefeldPotraShi
+  AlefeldPotraShi* = object of AbstractAlefeldPotraShi
 
 const
   bracketing_error = """The interval [a,b] is not a bracketing interval.
@@ -614,7 +614,6 @@ template defaultTolerances*[A: AbstractAlefeldPotraShi](M: A) =
 proc defaultTolerances*[T, S: SomeFloat, A: AbstractAlefeldPotraShi](M: A): (T, T, S, S, int, int, bool) =
   let
     xatol = T(0.0)
-    xrtol = 2 * ()
     atol = S(0.0)
     rtol = S(0.0)
     maxevals = 45
@@ -916,7 +915,7 @@ proc updateState*[T, S: SomeFloat, CF: CallableFunction or proc(a: T): S](M: Ale
 # declared as in Julia
 
 proc findZero*[T, S: SomeFloat](f: proc(a: S): T, x0: (S, S), verbose = false, kwargs: varargs[UnivariateZeroOptions[T, T, T, T]]): T =
-  var M: Bisection
+  let M = Bisection()
   if len(kwargs) == 0:
     return findZero(f, x0, M, verbose = verbose)
   return findZero(f, x0, M, verbose = verbose, kwargs = kwargs[0])
