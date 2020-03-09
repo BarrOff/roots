@@ -25,6 +25,7 @@ proc newtonQuadratic[T, S: SomeFloat, R: SomeInteger](a, b, d: T, fa, fb, fd: S,
 
 
 proc logStep*[T, S: SomeFloat, A: AbstractBracketing](l: Tracks[T, S], M: A, state: UnivariateZeroState[T, S]) =
+proc logStep*[T, S: SomeFloat, A: Bisection|BisectionExact](l: Tracks[T, S], M: A, state: UnivariateZeroState[T, S]) =
   add(l.xs, state.xn0)
   add(l.xs, state.xn1)
 
@@ -689,7 +690,7 @@ proc assessConvergence*[T, S: SomeFloat, A: AbstractAlefeldPotraShi](M: A, state
 
   return false
 
-proc logStep*[T, S: SomeFloat, A: AbstractAlefeldPotraShi](l: Tracks[T, S], M: A, state: UnivariateZeroState[T, S], init: int) =
+proc logStep*[T, S: SomeFloat, A: AbstractAlefeldPotraShi](l: Tracks[T, S], M: A, state: UnivariateZeroState[T, S]) =
   let
     a = state.xn0
     b = state.xn1
@@ -937,6 +938,7 @@ proc findZero*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod, CF: CallableFun
     logStep(l)
   elif M is AbstractAlefeldPotraShi:
     logStep(l, M, state, 1)
+    logStep(l, M, state)
   else:
     logStep(l, true, state, 1)
 
@@ -968,6 +970,7 @@ proc findZero*[T, S: SomeFloat, AM, AN: AbstractUnivariateZeroMethod, CF: Callab
     logStep(l)
   elif M is AbstractAlefeldPotraShi:
     logStep(l, M, state, 1)
+    logStep(l, M, state)
   else:
     logStep(l, true, state, 1)
   let
