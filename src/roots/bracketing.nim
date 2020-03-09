@@ -18,17 +18,17 @@ const
 
 # forward declarations
 
-proc middle*[T: SomeNumber](x, y: T): float
-proc middle2*[T, S: SomeFloat](a: T, b: S): float
-proc ipzero*[T, S: SomeFloat](a, b, c, d: T, fa, fb, fc, fd: S, delta: T = T(0.0)): T
-proc newtonQuadratic*[T, S: SomeFloat, R: SomeInteger](a, b, d: T, fa, fb, fd: S, k: R, delta: T = T(0.0)): T
+proc middle[T: SomeNumber](x, y: T): float
+proc middle2[T, S: SomeFloat](a: T, b: S): float
+proc ipzero[T, S: SomeFloat](a, b, c, d: T, fa, fb, fc, fd: S, delta: T = T(0.0)): T
+proc newtonQuadratic[T, S: SomeFloat, R: SomeInteger](a, b, d: T, fa, fb, fd: S, k: R, delta: T = T(0.0)): T
 
 
 proc logStep*[T, S: SomeFloat, A: AbstractBracketing](l: Tracks[T, S], M: A, state: UnivariateZeroState[T, S]) =
   add(l.xs, state.xn0)
   add(l.xs, state.xn1)
 
-proc adjustBracket*[T: SomeFloat](x0: (T, T)): (T, T) =
+proc adjustBracket[T: SomeFloat](x0: (T, T)): (T, T) =
   var
     (u, v) = x0
 
@@ -174,7 +174,7 @@ proc defaultTolerances*[T,S: SomeFloat](M: Bisection | BisectionExact): (T, T, S
 
   return((xatol, xrtol, atol, rtol, maxevals, maxfnevals, strict))
 
-proc middle*[T: SomeNumber](x, y: T): float =
+proc middle[T: SomeNumber](x, y: T): float =
   var
     a, b: float
   if abs(x) == Inf:
@@ -197,7 +197,7 @@ proc middle*[T: SomeNumber](x, y: T): float =
   else:
     return middle2(a, b)
 
-proc middle2*[T, S: SomeFloat](a: T, b: S): float =
+proc middle2[T, S: SomeFloat](a: T, b: S): float =
   let
     s = sizeof(S)
     t = sizeof(T)
@@ -215,7 +215,7 @@ proc middle2*[T, S: SomeFloat](a: T, b: S): float =
   else:
     return 0.5 * a + 0.5 * float(b)
 
-proc middle2*[T: SomeInteger](a, b: T): float =
+proc middle2[T: SomeInteger](a, b: T): float =
   return 0.5 * float(a) + 0.5 * float(b)
 
 proc assessConvergence*[T, S: SomeFloat](M: Bisection, state: UnivariateZeroState[T, S], options: UnivariateZeroOptions[T, T, S, S]): bool =
@@ -430,28 +430,28 @@ proc findZero*[T, S: SomeNumber, SI: proc(a: SomeInteger): SomeNumber|proc(a: So
 
   return float(NaN)
 
-proc isBracket*[T: SomeNumber](fa, fb: T): bool {.inline.} =
+proc isBracket[T: SomeNumber](fa, fb: T): bool {.inline.} =
   return sgn(fa) * sgn(fb) < 0
 
-proc fAB*[T, S: SomeFloat](a, b: T, fa, fb: S): float {.inline.} =
+proc fAB[T, S: SomeFloat](a, b: T, fa, fb: S): float {.inline.} =
   return float(fb - fa) / float(b - a)
 
-proc fABD*[T, S: SomeFloat](a, b, d: T, fa, fb, fd: S): float {.inline.} =
+proc fABD[T, S: SomeFloat](a, b, d: T, fa, fb, fd: S): float {.inline.} =
   let
     fabi = fAB(a, b, fa, fb)
     fbdi = fAB(b, d, fb, fd)
   return (fbdi - fabi) / (d - a)
 
-proc secantStep*[T, S: SomeFloat](a, b: T, fa, fb: S): T {.inline.} =
+proc secantStep[T, S: SomeFloat](a, b: T, fa, fb: S): T {.inline.} =
   return a - T(fa * (b - a) / (fb - fa))
 
-proc bracket*[T, S: SomeFloat](a, b, c: T, fa, fb, fc: S): (T, T, T, S, S, S) =
+proc bracket[T, S: SomeFloat](a, b, c: T, fa, fb, fc: S): (T, T, T, S, S, S) =
   if isBracket(fa, fc):
     return (a, c, b, fa, fc, fb)
   else:
     return (c, b, a, fc, fb, fa)
 
-proc takeA42Step*[T, S: SomeFloat](a, b, d, ee: T, fa, fb, fd, fe: S, delta: T = T(0.0)): T =
+proc takeA42Step[T, S: SomeFloat](a, b, d, ee: T, fa, fb, fd, fe: S, delta: T = T(0.0)): T =
   let
     fs = (fa, fb, fd, fe)
 
@@ -463,7 +463,7 @@ proc takeA42Step*[T, S: SomeFloat](a, b, d, ee: T, fa, fb, fd, fe: S, delta: T =
   r = newtonQuadratic(a, b, d, fa, fb, fd, 3, delta)
   return r
 
-proc ipzero*[T, S: SomeFloat](a, b, c, d: T, fa, fb, fc, fd: S, delta: T = T(0.0)): T =
+proc ipzero[T, S: SomeFloat](a, b, c, d: T, fa, fb, fc, fd: S, delta: T = T(0.0)): T =
   let
     Q11 = (c - d) * fc / (fd - fc)
     Q21 = (b - c) * fb / (fc - fb)
@@ -481,7 +481,7 @@ proc ipzero*[T, S: SomeFloat](a, b, c, d: T, fa, fb, fc, fd: S, delta: T = T(0.0
 
   return newtonQuadratic(a, b, d, fa, fb, fd, 3, delta)
 
-proc newtonQuadratic*[T, S: SomeFloat, R: SomeInteger](a, b, d: T, fa, fb, fd: S, k: R, delta: T = T(0.0)): T =
+proc newtonQuadratic[T, S: SomeFloat, R: SomeInteger](a, b, d: T, fa, fb, fd: S, k: R, delta: T = T(0.0)): T =
   let
     A = fABD(a, b, d, fa, fb, fd)
 
@@ -716,7 +716,7 @@ proc logStep*[T, S: SomeFloat, A: AbstractAlefeldPotraShi](l: Tracks[T, S], M: A
   add(l.xs, a)
   add(l.xs, b)
 
-proc updateState*[T, S: SomeFloat, CF: CallableFunction or proc(a: T): S](M: A42, f: CF, state: UnivariateZeroState[T, S], options: UnivariateZeroOptions[T, T, S, S]) =
+proc updateState[T, S: SomeFloat, CF: CallableFunction or proc(a: T): S](M: A42, f: CF, state: UnivariateZeroState[T, S], options: UnivariateZeroOptions[T, T, S, S]) =
   var
     a = state.xn0
     b = state.xn1
@@ -822,7 +822,7 @@ proc updateState*[T, S: SomeFloat, CF: CallableFunction or proc(a: T): S](M: A42
 
   return
 
-proc updateState*[T, S: SomeFloat, CF: CallableFunction or proc(a: T): S](M: AlefeldPotraShi, f: CF, state: UnivariateZeroState[T, S], options: UnivariateZeroOptions[T, T, S, S]) =
+proc updateState[T, S: SomeFloat, CF: CallableFunction or proc(a: T): S](M: AlefeldPotraShi, f: CF, state: UnivariateZeroState[T, S], options: UnivariateZeroOptions[T, T, S, S]) =
 
   var
     a = state.xn0
@@ -931,7 +931,7 @@ proc runBisection*[T, S](f: proc(a: T): S, xs: (T, T),
 # Main method
 # return a zero or NaN.
 ## Updates state, could be `find_zero!(state, M, F, options, l)...
-proc findZero*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod, CF: CallableFunction](M: A, F: CF, options: UnivariateZeroOptions[T, T, S, S], state: UnivariateZeroState[T, S], l: Tracks[T, S]|NullTracks = NullTracks()): T =
+proc findZero[T, S: SomeFloat, A: AbstractUnivariateZeroMethod, CF: CallableFunction](M: A, F: CF, options: UnivariateZeroOptions[T, T, S, S], state: UnivariateZeroState[T, S], l: Tracks[T, S]|NullTracks = NullTracks()): T =
   when l is NullTracks:
     logStep(l)
   elif M is AbstractAlefeldPotraShi:
@@ -961,7 +961,7 @@ proc findZero*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod, CF: CallableFun
 # * limit steps so as not too far or too near the previous one
 # * if not decreasing, use a quad step upto 4 times to bounce out of trap, if possible
 # First uses M, then N if bracket is identified
-proc findZero*[T, S: SomeFloat, AM, AN: AbstractUnivariateZeroMethod, CF: CallableFunction](M: AM, N: AN, F: CF, options: UnivariateZeroOptions[T, T, S, S], state: UnivariateZeroState[T, S], l: Tracks[T, S]|NullTracks = NullTracks()) =
+proc findZero[T, S: SomeFloat, AM, AN: AbstractUnivariateZeroMethod, CF: CallableFunction](M: AM, N: AN, F: CF, options: UnivariateZeroOptions[T, T, S, S], state: UnivariateZeroState[T, S], l: Tracks[T, S]|NullTracks = NullTracks()) =
   when l is NullTracks:
     logStep(l)
   elif M is AbstractAlefeldPotraShi:
@@ -1075,4 +1075,4 @@ proc findZero*[T, S: SomeFloat, AM, AN: AbstractUnivariateZeroMethod, CF: Callab
         logStep(l, M, state)
       incsteps(state)
 
-    decide_convergence(M, F, state, options)
+    decideConvergence(M, F, state, options)
