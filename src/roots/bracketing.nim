@@ -935,14 +935,17 @@ proc findZero*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod, CF: CallableFun
   when l is NullTracks:
     logStep(l)
   elif M is AbstractAlefeldPotraShi:
-    logStep(l, M, state, 1)
     logStep(l, M, state)
   else:
     logStep(l, true, state, 1)
 
   while true:
-    let
-      val = assessConvergence(M, state, options)
+    when A is AbstractBisection or A is AbstractAlefeldPotraShi:
+      let
+        val = assessConvergence(M, state, options)
+    else:
+      let
+        val = assessConvergence(true, state, options)
     if val:
       break
     updateState(M, F, state, options)
@@ -975,8 +978,12 @@ proc findZero*[T, S: SomeFloat, AM, AN: AbstractUnivariateZeroMethod, CF: Callab
 
   while true:
 
-    if assessConvergence(M, state, options):
-      break
+    when AM is AbstractBisection or AM is AbstractAlefeldPotraShi:
+      if assessConvergence(M, state, options):
+        break
+    else:
+      if assessConvergence(true, state, options):
+        break
 
     copyState(state0, state)
     updateState(M, F, state0, options)
