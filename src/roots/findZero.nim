@@ -364,7 +364,7 @@ proc assessConvergence*[T, S: SomeFloat](methodes: bool, state: UnivariateZeroSt
     xn1 = state.xn1
     fxn1 = state.fxn1
 
-  if (state.converged or state.fConverged or state.stopped):
+  if (state.xConverged or state.fConverged or state.stopped):
     return true
 
   if xn1 == NaN or fxn1 == NaN:
@@ -386,7 +386,7 @@ proc assessConvergence*[T, S: SomeFloat](methodes: bool, state: UnivariateZeroSt
   # in find_zeros there is a check that f could be a zero with a relaxed tolerance
   if abs(xn1 - xn0) < max(options.xabstol, max(abs(xn1), abs(xn0)) * options.xreltol):
     state.message &= "x_n ≈ x_(n-1). "
-    state.converged = true
+    state.xConverged = true
     return true
 
   if state.steps > options.maxevals:
