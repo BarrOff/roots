@@ -2,21 +2,21 @@ import math
 
 type
   # type to throw on succesful convergence
-  StateConverged = ref object of RootObj
+  StateConverged* = ref object of RootObj
     x0*: SomeNumber
 
   # type to throw on failure
-  ConvergenceFailed = ref object of RootObj
-    reason: string
+  ConvergenceFailed* = ref object of RootObj
+    reason*: string
 
 # Helpers for the various methods
 
 # issue with approx derivative
-proc isIssue[T: SomeNumber](x: T): bool =
+proc isIssue*[T: SomeInteger](x: T): bool =
   return x == T(0)
 
-proc isIssue[T: SomeFloat](x: T): bool =
-  return x == T(0) or x == high(T)
+proc isIssue*[T: SomeFloat](x: T): bool =
+  return x == T(0) or x == T(Inf) or x == T(NaN)
 
 # of (a,fa), (b,fb) choose pair where |f| is smallest
 proc chooseSmallest*[T: SomeNumber](a, b, fa, fb: T): (T, T) {.inline.} =
@@ -25,14 +25,14 @@ proc chooseSmallest*[T: SomeNumber](a, b, fa, fb: T): (T, T) {.inline.} =
 
   return (b, fb)
 
-proc sortSmallest[T](a, b, fa, fb: T): (T, T, T, T) {.inline.} =
+proc sortSmallest*[T](a, b, fa, fb: T): (T, T, T, T) {.inline.} =
   if abs(fa) < abs(fb):
     return (a, b, fa, fb)
 
   return (b, a, fb, fa)
 
 
-proc defaultSecantStep[T: SomeFloat](x1: T): T =
+proc defaultSecantStep*[T: SomeFloat](x1: T): T =
   
     let
       h = when(sizeof(T) == 8):
@@ -44,10 +44,10 @@ proc defaultSecantStep[T: SomeFloat](x1: T): T =
 
     return x0
 
-proc steffStep[T: SomeFloat](x: T, fx: SomeFloat): T =           # NO M: Any!
+proc steffStep*[T: SomeFloat](x: T, fx: SomeFloat): T =           # NO M: Any!
   return x + T(fx)
 
-proc guardedSecantStep[T: SomeFloat](a, b, fa, fb: T): (T, bool) =
+proc guardedSecantStep*[T: SomeFloat](a, b, fa, fb: T): (T, bool) =
   let
     fp = (fb - fa) / (b - a)
 
@@ -71,7 +71,7 @@ proc quadVertex*[T, S: SomeFloat](c: T, fc: S, b: T, fb: S, a: T, fa: S): T =
 
   return 0.5 * ((a + b) - fba / (fbc -fba) * (c - a))
 
-proc fbracket[T: SomeFloat](a, b, fa, fb: T): (T, bool) =
+proc fbracket*[T: SomeFloat](a, b, fa, fb: T): (T, bool) =
   let
     num = fb - fa
     den = b - a
@@ -81,7 +81,7 @@ proc fbracket[T: SomeFloat](a, b, fa, fb: T): (T, bool) =
 
   return (num / den, isIssue(num / den))
 
-proc fbracketDiff[T: SomeFloat](a, b, c, fa, fb, fc: T): (T, bool) =
+proc fbracketDiff*[T: SomeFloat](a, b, c, fa, fb, fc: T): (T, bool) =
   var
     (x1, issue) = fbracket(b, c, fb, fc)
 
@@ -105,7 +105,7 @@ proc fbracketDiff[T: SomeFloat](a, b, c, fa, fb, fc: T): (T, bool) =
 
   return (outer, isIssue(outer))
 
-proc fbracketRatio[T: SomeFloat](a, b, c, fa, fb, fc: T): (T, bool) =
+proc fbracketRatio*[T: SomeFloat](a, b, c, fa, fb, fc: T): (T, bool) =
   let
     (x1, _) = fbracket(a, b, fa, fb)
     (x2, _) = fbracket(a, c, fa, fc)
@@ -114,7 +114,7 @@ proc fbracketRatio[T: SomeFloat](a, b, c, fa, fb, fc: T): (T, bool) =
 
   return (outer, isIssue(outer))
 
-proc identityStartingPoint[T: SomeFloat](f: proc (x: T): T, a, b: T, N: SomeInteger): T =
+proc identifyStartingPoint*[T: SomeFloat](f: proc (x: T): T, a, b: T, N: SomeInteger): T =
   let
     stepSize = (abs(a) - abs(b)) / N
   var
@@ -125,9 +125,9 @@ proc identityStartingPoint[T: SomeFloat](f: proc (x: T): T, a, b: T, N: SomeInte
   for i in 1..N:
     sfxs.add(sgn(f(a + i * stepSize)))
 
-  return identityStartingPoint(a, b, sfxs)
+  return identifyStartingPoint(a, b, sfxs)
 
-proc identityStartingPoint[T: SomeFloat](a, b: T, sfxs: seq[int]): T =
+proc identifyStartingPoint*[T: SomeFloat](a, b: T, sfxs: seq[int]): T =
   let
     N = len(sfxs) - 1
     p0 = a + (b - a) / 2
