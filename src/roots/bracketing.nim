@@ -932,6 +932,7 @@ proc runBisection*[T, S](f: proc(a: T): S, xs: (T, T),
 # return a zero or NaN.
 ## Updates state, could be `find_zero!(state, M, F, options, l)...
 proc findZero[T, S: SomeFloat, A: AbstractUnivariateZeroMethod, CF: CallableFunction](M: A, F: CF, options: UnivariateZeroOptions[T, T, S, S], state: UnivariateZeroState[T, S], l: Tracks[T, S]|NullTracks = NullTracks()): T =
+proc findZero*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod, CF: CallableFunction](M: A, F: CF, options: UnivariateZeroOptions[T, T, S, S], state: UnivariateZeroState[T, S], l: Tracks[T, S]|NullTracks = NullTracks()): T =
   when l is NullTracks:
     logStep(l)
   elif M is AbstractAlefeldPotraShi:
@@ -962,6 +963,7 @@ proc findZero[T, S: SomeFloat, A: AbstractUnivariateZeroMethod, CF: CallableFunc
 # * if not decreasing, use a quad step upto 4 times to bounce out of trap, if possible
 # First uses M, then N if bracket is identified
 proc findZero[T, S: SomeFloat, AM, AN: AbstractUnivariateZeroMethod, CF: CallableFunction](M: AM, N: AN, F: CF, options: UnivariateZeroOptions[T, T, S, S], state: UnivariateZeroState[T, S], l: Tracks[T, S]|NullTracks = NullTracks()) =
+proc findZero*[T, S: SomeFloat, AM, AN: AbstractUnivariateZeroMethod, CF: CallableFunction](M: AM, N: AN, F: CF, options: UnivariateZeroOptions[T, T, S, S], state: UnivariateZeroState[T, S], l: Tracks[T, S]|NullTracks = NullTracks()) =
   when l is NullTracks:
     logStep(l)
   elif M is AbstractAlefeldPotraShi:
