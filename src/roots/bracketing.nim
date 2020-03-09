@@ -10,6 +10,7 @@ type
   AbstractAlefeldPotraShi* = object of AbstractBracketing
   A42* = object of AbstractAlefeldPotraShi
   AlefeldPotraShi* = object of AbstractAlefeldPotraShi
+  Brent* = object of AbstractBracketing
 
 const
   bracketing_error = """The interval [a,b] is not a bracketing interval.
@@ -1084,3 +1085,200 @@ proc findZero*[T, S: SomeFloat, AM, AN: AbstractUnivariateZeroMethod, CF: Callab
       incsteps(state)
 
     decideConvergence(M, F, state, options)
+
+# Roots.Brent()
+
+# An implementation of
+# [Brent's](https://en.wikipedia.org/wiki/Brent%27s_method) (or Brent-Dekker) method.
+# This method uses a choice of inverse quadratic interpolation or a secant
+# step, falling back on bisection if necessary.
+
+proc logStep*[T, S: SomeFloat](l: Tracks[T, S], M: Brent, state: UnivariateZeroState[T, S]) =
+  let
+    a = state.xn0
+    b = state.xn1
+  var
+    u, v: T
+  if a < b:
+    u = a
+    v = b
+  else:
+    u = b
+    v = a
+  add(l.xs, u)
+  add(l.xs, v)
+  return
+
+proc initState2*[T: SomeFloat, CF: CallableFunction or proc(a: T): float](M: Brent, f: CF, xs: (T, T)): UnivariateZeroState[T, float] =
+  let
+    u = xs[0]
+    v = xs[1]
+
+  when typeof(f) is CallableFunction:
+    let
+      fu = f.f(u)
+      fv = f.f(v)
+  else:
+    let
+      fu = f(u)
+      fv = f(v)
+
+  var
+    a, b: T
+    fa, fb: float
+
+  if not(isBracket(fu, fv)):
+    raise newException(InitialValueError, bracketing_error)
+
+  if abs(fu) > abs(fv):
+    a = u
+    b = v
+    fa = fu
+    fb = fv
+  else:
+    a = v
+    b = u
+    fa = fv
+    fb = fu
+
+  let state: UnivariateZeroState[T, float] = new(UnivariateZeroState[T, float])
+
+  state.xn1 = b
+  state.xn0 = a
+  state.m = @[a, a]
+  state.fxn1 = fb
+  state.fxn0 = fa
+  state.fm = @[fa, float(1)]
+  state.steps = 0
+  state.fnevals = 2
+  state.stopped = false
+  state.xConverged = false
+  state.fConverged = false
+  state.convergenceFailed = false
+  state.message = ""
+
+  return state
+
+proc initState3*[T, S: SomeFloat, CF: CallableFunction or proc(a: T): S](state: UnivariateZeroState[T, S], M: Brent, f: CF, xs: (T, T)) =
+  let
+    u = xs[0]
+    v = xs[1]
+
+  when typeof(f) is CallableFunction:
+    let
+      fu = f.f(u)
+      fv = f.f(v)
+  else:
+    let
+      fu = f(u)
+      fv = f(v)
+
+  if not(isBracket(fu, fv)):
+    raise newException(InitialValueError, bracketing_error)
+
+  var
+    a, b: T
+    fa, fb: S
+
+  # brent store b as smaller of |fa|, |fb|
+  if abs(fu) > abs(fv):
+    a = u
+    b = v
+    fa = fu
+    fb = fv
+  else:
+    a = v
+    b = u
+    fa = fv
+    fb = fu
+
+  initState3(state, b, a, @[a, a], fb, fa, @[fa, S(1)])
+  state.steps = 0
+  state.stopped = false
+  state.xConverged = false
+  state.fConverged = false
+  state.convergenceFailed = false
+  
+  return
+
+
+proc updateState*[T, S: SomeFloat, CF: CallableFunction or proc(a: T): S](M: Brent, f: CF, state: UnivariateZeroState[T, S], options: UnivariateZeroOptions[T, T, S, S]) =
+  var
+    mflag = state.fm[1] > 0.0
+    a = state.xn0
+    b = state.xn1
+    c = state.m[0]
+    d = state.m[1]
+    fa = state.fxn0
+    fb = state.fxn1
+    fc = state.fm[0]
+
+  # next step
+  var
+    s = T(0)
+    fs: S
+  if fa - fc != 0.0 and fb - fc != 0.0:
+    s =  a * fb * fc / (fa - fb) / (fa - fc) # quad step
+    s += b * fa * fc / (fb - fa) / (fb - fc)
+    s += c * fa * fb / (fc - fa) / (fc - fb)
+  else:
+    s = secantStep(a, b, fa, fb)
+
+  when f is CallableFunction:
+    fs = f.f(s)
+  else:
+    fs = f(s)
+  incfn(state)
+  if checkZero(M, state, s, fs):
+    return
+
+  # guard step
+  var
+    u = (3 * a + b) / 4
+    v = b
+
+  if u > v:
+    var temp = u
+    u = v
+    v = temp
+
+  let
+    tol = max(options.xabstol, max(abs(b), max(abs(c), abs(d))) * options.xreltol)
+
+  if not(u < s and s < v) or (mflag and abs(s - b) >= abs(b - c)/2) or
+    (not(mflag) and abs(s - b) >= abs(b - c)/2) or (mflag and abs(b - c) <= tol) or
+    (not(mflag) and abs(c - d) <= tol):
+    s = middle(a, b)
+    when f is CallableFunction:
+      fs = f.f(s)
+    else:
+      fs = f(s)
+    incfn(state)
+    if checkZero(M, state, s, fs):
+      return
+    mflag = true
+  else:
+    mflag = false
+
+  d = c
+  c = b
+  fc = fb
+
+  if sgn(fa) * sgn(fs) < 0:
+    b = s
+    fb = fs
+  else:
+    a = s
+    fa = fs
+
+  if abs(fa) < abs(fb):
+    (a, b, fa, fb) = (b, a, fb, fa)
+
+  (state.xn0, state.xn1, state.m[0], state.m[1]) = (a, b, c, d)
+  (state.fxn0, state.fxn1, state.fm[0]) = (fa, fb, fc)
+  if mflag:
+    state.fm[1] = T(1)
+  else:
+    state.fm[1] = T(-1)
+
+  return

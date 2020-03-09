@@ -19,7 +19,7 @@ From my limited testing it seems, that the following algorithms work:
 |BisectionExact    | working           |
 |A42               | working           |
 |AlefeldPotraShi   | working           |
-|Brent             | not implemented   | 
+|Brent             | working           | 
 
 
 
