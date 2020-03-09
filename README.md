@@ -35,10 +35,7 @@ import math, roots
 proc f(x: float): float =
   return exp(x) - x^4
 
-var
-  bis: Bisection
-
-echo findZero(f, (8, 9), bis)
+echo findZero(f, (8, 9), Bisection())
 
 # Bisection is the preset method so this should give the same result:
 echo findZero(f, (8, 9))
@@ -57,7 +54,6 @@ proc f(x: float): float =
 
 var
   options: UnivariateZeroOptions[float, float, float, float]
-  ale: AlefeldPotraShi
 
 new(options)
 options.xabstol = 1e-6
@@ -68,7 +64,7 @@ options.maxevals = 50
 options.maxfnevals = 50
 options.strict = false
 
-echo findZero(f, (8, 9), ale, verbose = true, options)
+echo findZero(f, (8, 9), AlefeldPotraShi(), verbose = true, options)
 ```
 
 The library can not handle arrays as input. The function may not use integers in its' domain or codomain.
@@ -77,8 +73,9 @@ The library can not handle arrays as input. The function may not use integers in
 
 - [x] implement basic structure in Nim
 - [x] implement basic bisection algorithm and [AlefeldPotraShi](https://dx.doi.org/10.1090/s0025-5718-1993-1192965-2)
-- [] add tests
-- [] implement non-bracketing methods
-- [] clean up code and possibly restructure
-- [] add documentation
-- [] make code more type generic (possibly handling arrays as parameters)
+- [ ] add tests
+- [ ] implement non-bracketing methods
+- [ ] clean up code and possibly restructure
+- [ ] add documentation
+- [ ] make code more type generic (possibly handling arrays as parameters)
+- [ ] don't export everythink, use sane encapsulation
