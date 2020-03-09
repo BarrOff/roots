@@ -26,7 +26,7 @@ From my limited testing it seems, that the following algorithms work:
 ### Usage
 
 Similar to the Roots.jl way specifying the algorithm is optional. If none is given, Bisection is used.
-The chosen algorithm is selected by adding an object of the respective type to the `findZero` function call.
+The chosen algorithm can be passed as the third parameter to the `findZero` function call.
 Some examples:
 
 ```nim
@@ -67,7 +67,7 @@ options.strict = false
 echo findZero(f, (8, 9), AlefeldPotraShi(), verbose = true, options)
 ```
 
-The library can not handle arrays as input. The function may not use integers in its' domain or codomain.
+**The library can not handle arrays as input. The function may not use integers in its' domain or codomain.**
 
 ## To-do
 
