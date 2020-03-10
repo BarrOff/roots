@@ -53,7 +53,7 @@ proc adjustBracket[T: SomeFloat](x0: (T, T)): (T, T) =
   return (u, v)
 
 
-proc initState2*[T: SomeFloat, A: AbstractBisection, CF: CallableFunction or proc (a: T): T](meth: A, fs: CF, x: (T, T)): UnivariateZeroState[T, T] =
+proc initState*[T: SomeFloat, A: AbstractBisection, CF: CallableFunction or proc (a: T): T](meth: A, fs: CF, x: (T, T)): UnivariateZeroState[T, T] =
   let
     (x0, x1) = adjustBracket(x)
 
@@ -69,9 +69,9 @@ proc initState2*[T: SomeFloat, A: AbstractBisection, CF: CallableFunction or pro
   if sgn(fx0) * sgn(fx1) > 0:
     raise newException(InitialValueError, bracketing_error)
 
-  return initState2(meth, fs, (x0, x1), (fx0, fx1))
+  return initState(meth, fs, (x0, x1), (fx0, fx1))
 
-proc initState2*[T: SomeFloat, A: AbstractBisection, CF: CallableFunction or proc (a: T): T](meth: A, fs: CF, xs, fxs: (T, T)): UnivariateZeroState[T, T] =
+proc initState*[T: SomeFloat, A: AbstractBisection, CF: CallableFunction or proc (a: T): T](meth: A, fs: CF, xs, fxs: (T, T)): UnivariateZeroState[T, T] =
   let
     (x0, x1) = xs
     (fx0, fx1) = fxs
@@ -94,10 +94,10 @@ proc initState2*[T: SomeFloat, A: AbstractBisection, CF: CallableFunction or pro
   state.convergenceFailed = false
   state.message = ""
 
-  initState3(state, meth, fs, (x0, x1), (fx0, fx1))
+  initState(state, meth, fs, (x0, x1), (fx0, fx1))
   return state
 
-proc initState3*[T: SomeFloat, A: AbstractBisection, CF: CallableFunction or proc (a: T): T](state: UnivariateZeroState[T, T], M: A, fs: CF, xs: (T, T)) =
+proc initState*[T: SomeFloat, A: AbstractBisection, CF: CallableFunction or proc (a: T): T](state: UnivariateZeroState[T, T], M: A, fs: CF, xs: (T, T)) =
   let
     (x0, x1) = xs
 
@@ -110,10 +110,10 @@ proc initState3*[T: SomeFloat, A: AbstractBisection, CF: CallableFunction or pro
       fx0 = fs(x0)
       fx1 = fs(x1)
 
-  initState3(state, M, fs, (x0, x1), (fx0, fx1))
+  initState(state, M, fs, (x0, x1), (fx0, fx1))
   return
 
-proc initState3*[T: SomeFloat, A: AbstractBisection, CF: CallableFunction or proc (a: T): T](state: UnivariateZeroState[T, T], M: A, fs: CF, xs, fxs: (T, T)) =
+proc initState*[T: SomeFloat, A: AbstractBisection, CF: CallableFunction or proc (a: T): T](state: UnivariateZeroState[T, T], M: A, fs: CF, xs, fxs: (T, T)) =
   var
     (x0, x1) = xs
     (fx0, fx1) = fxs
@@ -156,7 +156,7 @@ proc initState3*[T: SomeFloat, A: AbstractBisection, CF: CallableFunction or pro
     fm = fs(m)
   incfn(state)
 
-  initState3(state, x1, x0, @[m], fx1, fx0, @[fm])
+  initState(state, x1, x0, @[m], fx1, fx0, @[fm])
   return
 
 
@@ -310,7 +310,7 @@ proc findZero*[T, S: SomeFloat, A: AbstractBracketing, AT: Tracks[T, S] or NullT
   let
     x = adjustBracket(x0)
     F = callable_functions(fs)
-    state = initState2(methods, F, x)
+    state = initState(methods, F, x)
 
   var
     options: UnivariateZeroOptions[T, T, S, S]
@@ -362,7 +362,7 @@ proc findZero*[T, S: SomeFloat, A: AbstractBracketing, AT: Tracks[T, S] or NullT
   let
     x = adjustBracket(x0)
     F = callable_functions(fs)
-    state = initState2(methods, F, x)
+    state = initState(methods, F, x)
 
   var
     options: UnivariateZeroOptions[T, T, S, S]
@@ -517,7 +517,7 @@ proc newtonQuadratic[T, S: SomeFloat, R: SomeInteger](a, b, d: T, fa, fb, fd: S,
 
   return middle(a, b)
 
-proc initState2*[T, S: SomeFloat, A: AbstractAlefeldPotraShi, CF: CallableFunction or proc(a: float): float](M: A, f: CF, xs: (T, S)): UnivariateZeroState[float, float] =
+proc initState*[T, S: SomeFloat, A: AbstractAlefeldPotraShi, CF: CallableFunction or proc(a: float): float](M: A, f: CF, xs: (T, S)): UnivariateZeroState[float, float] =
   var
     u = float(xs[0])
     v = float(xs[1])
@@ -558,10 +558,10 @@ proc initState2*[T, S: SomeFloat, A: AbstractAlefeldPotraShi, CF: CallableFuncti
   state.convergenceFailed = false
   state.message = ""
 
-  initState3(state, M, f, (u, v), false)
+  initState(state, M, f, (u, v), false)
   return state
 
-proc initState3*[T, S: SomeFloat, A: AbstractAlefeldPotraShi, CF: CallableFunction or proc(a: T): S](state: UnivariateZeroState[T, S], aaps: A, f: CF, xs: (T, T), computeFx = true) =
+proc initState*[T, S: SomeFloat, A: AbstractAlefeldPotraShi, CF: CallableFunction or proc(a: T): S](state: UnivariateZeroState[T, S], aaps: A, f: CF, xs: (T, T), computeFx = true) =
   var
     a, b, c, d, ee: T
     fa, fb, fc, fd, fe: S
@@ -601,7 +601,7 @@ proc initState3*[T, S: SomeFloat, A: AbstractAlefeldPotraShi, CF: CallableFuncti
   ee = d
   fe = fd
 
-  initState3(state, b, a, @[d, ee], fb, fa, @[fd, fe])
+  initState(state, b, a, @[d, ee], fb, fa, @[fd, fe])
   state.steps = 0
   state.stopped = false
   state.xConverged = false
@@ -1109,7 +1109,7 @@ proc logStep*[T, S: SomeFloat](l: Tracks[T, S], M: Brent, state: UnivariateZeroS
   add(l.xs, v)
   return
 
-proc initState2*[T: SomeFloat, CF: CallableFunction or proc(a: T): float](M: Brent, f: CF, xs: (T, T)): UnivariateZeroState[T, float] =
+proc initState*[T: SomeFloat, CF: CallableFunction or proc(a: T): float](M: Brent, f: CF, xs: (T, T)): UnivariateZeroState[T, float] =
   let
     u = xs[0]
     v = xs[1]
@@ -1159,7 +1159,7 @@ proc initState2*[T: SomeFloat, CF: CallableFunction or proc(a: T): float](M: Bre
 
   return state
 
-proc initState3*[T, S: SomeFloat, CF: CallableFunction or proc(a: T): S](state: UnivariateZeroState[T, S], M: Brent, f: CF, xs: (T, T)) =
+proc initState*[T, S: SomeFloat, CF: CallableFunction or proc(a: T): S](state: UnivariateZeroState[T, S], M: Brent, f: CF, xs: (T, T)) =
   let
     u = xs[0]
     v = xs[1]
@@ -1192,7 +1192,7 @@ proc initState3*[T, S: SomeFloat, CF: CallableFunction or proc(a: T): S](state: 
     fa = fv
     fb = fu
 
-  initState3(state, b, a, @[a, a], fb, fa, @[fa, S(1)])
+  initState(state, b, a, @[a, a], fb, fa, @[fa, S(1)])
   state.steps = 0
   state.stopped = false
   state.xConverged = false
