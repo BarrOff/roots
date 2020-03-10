@@ -82,9 +82,11 @@ proc initState*[T: SomeFloat, A: AbstractBisection, CF: CallableFunction or proc
   new(state)
   state.xn1 = x1
   state.xn0 = x0
+  state.xstar = T(0)
   state.m = @[x1]
   state.fxn1 = fx1
   state.fxn0 = fx0
+  state.fxstar = fx1
   state.fm = @[fx1]
   state.steps = 0
   state.fnevals = 2
@@ -130,9 +132,9 @@ proc initState*[T: SomeFloat, A: AbstractBisection, CF: CallableFunction or proc
       m = x1
       fm = fx1
 
-    state.f_converged = true
-    state.xn1 = m
-    state.fxn1 = fm
+    state.fConverged = true
+    state.xstar = m
+    state.fxstar = fm
     return
 
   if sgn(x0) * sgn(x1) < 0:
@@ -145,9 +147,16 @@ proc initState*[T: SomeFloat, A: AbstractBisection, CF: CallableFunction or proc
     if sgn(fx0) * sgn(fm) < 0:
       x1 = m
       fx1 = fm
-    else:
+    elif sgn(fx0) * sgn(fm) > 0:
       x0 = m
       fx0 = fm
+    else:
+      state.message = "Exact zero found"
+      state.xstar = m
+      state.fxstar = fm
+      state.fConverged = true
+      state.xConverged = true
+      return
 
   m = middle(x0, x1)
   when typeof(fs) is CallableFunction:
@@ -234,7 +243,7 @@ proc assessConvergence*[T, S: SomeFloat](M: Bisection, state: UnivariateZeroStat
 
   if xConverged:
     state.message = ""
-    state.xn1 = xm
+    state.xstar = xm
     state.xConverged = true
     return true
   
@@ -245,8 +254,8 @@ proc assessConvergence*[T, S: SomeFloat](M: Bisection, state: UnivariateZeroStat
 
   if fConverged:
     state.message = ""
-    state.xn1 = xm
-    state.fxn1 = fm
+    state.xstar = xm
+    state.fxstar = fm
     state.fConverged = fConverged
     return true
 
@@ -266,15 +275,18 @@ proc assessConvergence*[T, S](M: BisectionExact, state: UnivariateZeroState[T, S
 
 
   for i in @[(x0, y0), (xm, ym), (x1, y1)]:
-    if i[1] == 0.0:
+    if i[1] == 0.0 or i[1] == S(NaN):
       state.fConverged = true
-      state.xn1 = i[0]
-      state.fxn1 = i[1]
+      state.xConverged = true
+      state.xstar = i[0]
+      state.fxstar = i[1]
       return true
 
   if x0 < xm and xm < x1:
     return false
 
+  state.xstar = x1
+  state.fxstar = ym
   state.xConverged = true
   return true
 
@@ -285,7 +297,7 @@ proc updateState*[T: SomeFloat, CF: CallableFunction or proc (a: T): T](M: Bisec
   var
     m = o.m[0]
 
-  if y0 * ym < 0.0:
+  if sgn(y0) * sgn(ym) < 0:
     o.xn1 = m
     o.fxn1 = ym
   else:
@@ -355,7 +367,7 @@ proc findZero*[T, S: SomeFloat, A: AbstractBracketing, AT: Tracks[T, S] or NullT
         var M: AbstractBracketing
         showTrace(methods, M, state, l)
 
-  return state.xn1
+  return state.xstar
 
 proc findZero*[T, S: SomeFloat, A: AbstractBracketing, AT: Tracks[T, S] or NullTracks](fs: proc (a: T): S, x0: (T, S), methods: A, tracks: AT = NullTracks(), verbose = false, kwargs: varargs[UnivariateZeroOptions[T, T, S, S]]): float =
 
@@ -544,11 +556,13 @@ proc initState*[T, S: SomeFloat, A: AbstractAlefeldPotraShi, CF: CallableFunctio
     state: UnivariateZeroState[T, S] = new(UnivariateZeroState[T, S])
 
   # new(state)
-  state.xn0 = v
-  state.xn1 = u
+  state.xn1 = v
+  state.xn0 = u
+  state.xstar = T(0)
   state.m = @[v, v]
-  state.fxn0 = fv
-  state.fxn1 = fu
+  state.fxn1 = fv
+  state.fxn0 = fu
+  state.fxstar = fv
   state.fm = @[fv, fv]
   state.steps = 0
   state.fnevals = 2
@@ -623,10 +637,10 @@ proc defaultTolerances*[T, S: SomeFloat, A: AbstractAlefeldPotraShi](M: A): (T, 
 
   when sizeof(T) == 8:
     let
-      xrtol = 2 * (nextafter(1.0, 2.0) - 1.0)
+      xrtol = (nextafter(1.0, 2.0) - 1.0) / 2
   else:
     let
-      xrtol = 2 * (nextafterf(1.0, 2.0) - 1.0)
+      xrtol = (nextafterf(1.0, 2.0) - 1.0) / 2
 
   return (xatol, xrtol, atol, rtol, maxevals, maxfnevals, strict)
 
@@ -644,14 +658,16 @@ proc checkZero*[T, S: SomeFloat, A: AbstractBracketing](M: A, state: UnivariateZ
   elif c == T(0):
     state.stopped = true
     state.message &= "Exact zero found. "
-    state.xn1 = c
-    state.fxn1 = fc
+    state.xstar = c
+    state.fxstar = fc
     return true
   else:
     return false
     
 proc assessConvergence*[T, S: SomeFloat, A: AbstractAlefeldPotraShi](M: A, state: UnivariateZeroState[T, S], options: UnivariateZeroOptions[T, T, S, S]): bool =
   if state.stopped or state.xConverged or state.fConverged:
+    if state.xstar == T(NaN):
+      (state.xstar, state.fxstar) = (state.xn1, state.fxn1)
     return true
 
   if state.steps > options.maxevals:
@@ -671,8 +687,8 @@ proc assessConvergence*[T, S: SomeFloat, A: AbstractAlefeldPotraShi](M: A, state
 
   if abs(fu) <= max(options.abstol, S(abs(u)) * options.reltol):
     state.fConverged = true
-    state.xn1 = u
-    state.fxn1 = fu
+    state.xstar = u
+    state.fxstar = fu
     if fu == S(0):
       state.message &= "Exact zero found. "
     return true
@@ -680,11 +696,17 @@ proc assessConvergence*[T, S: SomeFloat, A: AbstractAlefeldPotraShi](M: A, state
   let
     a = state.xn0
     b = state.xn1
-    tol = max(options.xabstol, max(abs(a), abs(b)) * options.xreltol)
+    mx = max(abs(a), abs(b))
+  when sizeof(T) == 8:
+    let
+      tol = max(options.xabstol, max(mx * options.xreltol, T(sgn(options.xreltol)) * max(nextafter(mx, Inf) - mx, mx - nextafter(mx, -Inf ))))
+  else:
+    let
+      tol = max(options.xabstol, max(mx * options.xreltol, T(sgn(options.xreltol)) * max(nextafterf(mx, Inf) - mx, mx - nextafterf(mx, -Inf ))))
 
   if abs(b - a) <= 2 * tol:
-    state.xn1 = u
-    state.fxn1 = fu
+    state.xstar = u
+    state.fxstar = fu
     state.xConverged = true
     return true
 
@@ -995,6 +1017,7 @@ proc findZero*[T, S: SomeFloat, AM, AN: AbstractUnivariateZeroMethod, CF: Callab
     ## did we find a zero or a bracketing interval?
     if state0.fxn1 == 0.0:
       copyState(state, state0)
+      (state.xstar, state.fxstar) = (state.xn1, state.fxn1)
       state.fConverged = true
       break
     elif sgn(state0.fxn0) * sgn(state0.fxn1) < 0:
@@ -1145,9 +1168,11 @@ proc initState*[T: SomeFloat, CF: CallableFunction or proc(a: T): float](M: Bren
 
   state.xn1 = b
   state.xn0 = a
+  state.xstar = T(0)
   state.m = @[a, a]
   state.fxn1 = fb
   state.fxn0 = fa
+  state.fxstar = fb
   state.fm = @[fa, float(1)]
   state.steps = 0
   state.fnevals = 2
@@ -1282,3 +1307,21 @@ proc updateState*[T, S: SomeFloat, CF: CallableFunction or proc(a: T): S](M: Bre
     state.fm[1] = T(-1)
 
   return
+
+proc findBracket[T, S: SomeFloat, A: AbstractAlefeldPotraShi or BisectionExact](f: proc(a: T): S, x0: (T, T), methods: A = A42(), kwargs: varargs[UnivariateZeroOptions[T, T, S, S]]): (T, (T, T), bool) =
+  let
+    x = adjustBracket(x0)
+    F = callableFunctions(f)
+    state = initState(methods, F, x)
+
+  var
+    options: UnivariateZeroState[T, T, S, S]
+
+  if len(kwargs) == 0:
+    options = initOptions(methods, state)
+  else:
+    options = kwargs[0]
+
+  discard findZero(methods, F, options, state)
+
+  return (state.xstar, (state.xn0, state.xn1), state.fxstar == S(0))

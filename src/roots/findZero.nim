@@ -11,9 +11,9 @@ type
   # States
   AbstractUnivariateZeroState* = ref object of RootObj
   UnivariateZeroState*[T, S] = ref object of AbstractUnivariateZeroState
-    xn0*, xn1*: T
+    xn0*, xn1*, xstar*: T
     m*: seq[T]
-    fxn0*, fxn1*: S
+    fxn0*, fxn1*, fxstar*: S
     fm*: seq[S]
     steps*: int
     fnevals*: int
@@ -147,9 +147,11 @@ proc initState*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod, CF: CallableFu
 proc copyState*[T, S: SomeNumber](state: UnivariateZeroState[T, S]): UnivariateZeroState[T, S] =
   result.xn1 = state.xn1
   result.xn0 = state.xn0
+  result.xstar = state.xstar
   result.m = state.m
   result.fxn1 = state.fxn1
   result.fxn0 = state.fxn0
+  result.fxstar = state.fxstar
   result.fm = state.fm
   result.steps = state.steps
   result.fnevals = state.fnevals
@@ -365,6 +367,8 @@ proc assessConvergence*[T, S: SomeFloat](methodes: bool, state: UnivariateZeroSt
     fxn1 = state.fxn1
 
   if (state.xConverged or state.fConverged or state.stopped):
+    if state.xstar == T(NaN):
+      (state.xstar, state.fxstar) = (xn1, fxn1)
     return true
 
   if xn1 == NaN or fxn1 == NaN:
@@ -379,12 +383,14 @@ proc assessConvergence*[T, S: SomeFloat](methodes: bool, state: UnivariateZeroSt
   
   # f(xstar) ≈ xstar * f'(xstar)*eps(), so we pass in lambda
   if isFApprox0(fxn1, xn1, options.abstol, options.reltol):
+    (state.xstar, state.fxstar) = (xn1, fxn1)
     state.fConverged = true
     return true
 
   # stop when xn1 ~ xn.
   # in find_zeros there is a check that f could be a zero with a relaxed tolerance
   if abs(xn1 - xn0) < max(options.xabstol, max(abs(xn1), abs(xn0)) * options.xreltol):
+    (state.xstar, state.fxstar) = (xn1, fxn1)
     state.message &= "x_n ≈ x_(n-1). "
     state.xConverged = true
     return true
@@ -487,13 +493,20 @@ proc findZero*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod, B: AbstractBrac
 # proc findZero*[Q: SomeNumber, T: SomeFloat](f: proc(a: Q): T, x0: Q, kwargs: varargs): T =
 #   return findZero(f, x0, Order0(), kwargs)                     Order0 not yet implemented
 
+proc findZero*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod, CF: CallableFunction or proc(a: T): S](M: A, F: CF, state: UnivariateZeroState[T, S], l: Tracks[T, S]|NullTracks = Nulltracks()) =
+  let
+    options = initOptions(M, state)
+
+  findZero(M, F, options, state, l)
+  return
+
 # state has stopped, this identifies if it has converged
 proc decideConvergence*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod, CF: CallableFunction](M: A, F: CF,
                                                                           state: UnivariateZeroState[T, S],
                                                                           options: UnivariateZeroOptions[T, T, S, S]): T =
   let
-    xn1 = state.xn1
-    fxn1 = state.fxn1
+    xn1 = state.xstar
+    fxn1 = state.fxstar
 
   if state.stopped or (state.xConverged and not state.fConverged):
     when sizeof(T) == 8:
@@ -522,6 +535,7 @@ proc decideConvergence*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod, CF: Ca
         fxstar = state.fxn1
 
       if isFApprox0(fxstar, xstar, options.abstol, options.reltol, relaxed = true):
+        (state.xstar, state.fxstar) = (xstar, fxstar)
         let
           msg = "Algorithm stopped early, but |f(xn)| < ϵ^(1/3), where ϵ depends on xn, rtol, and atol. "
         if state.message == "":
@@ -533,10 +547,10 @@ proc decideConvergence*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod, CF: Ca
         state.convergenceFailed = true
 
   if state.fConverged:
-    return state.xn1
+    return state.xstar
 
   if state.convergenceFailed:
-    return T(NaN)
+    return T(NaN * xn1)
 
   return T(NaN)
 
