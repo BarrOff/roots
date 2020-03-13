@@ -20,6 +20,7 @@ From my limited testing it seems, that the following algorithms work:
 |A42               | working           |
 |AlefeldPotraShi   | working           |
 |Brent             | working           | 
+|FalsePosition     | working           |
 
 
 
@@ -44,6 +45,8 @@ echo findZero(f, (8, 9))
 echo findZero(f, (8, 9), verbose = true)
 ```
 
+When using the FalsePosition algorithm, a number has to be passed to the initialisation call.
+The number has to be an int from 1 to 12 and correspondts to the respective galdino function.
 Options can be passed to the function by giving a UnivariateZeroOptions object as a last parameter:
 
 ```nim
@@ -64,7 +67,7 @@ options.maxevals = 50
 options.maxfnevals = 50
 options.strict = false
 
-echo findZero(f, (8, 9), AlefeldPotraShi(), verbose = true, options)
+echo findZero(f, (8, 9), FalsePosition(g: 12), verbose = true, options)
 ```
 
 **The library can not handle arrays as input. The function may not use integers in its' domain or codomain.**
@@ -73,6 +76,7 @@ echo findZero(f, (8, 9), AlefeldPotraShi(), verbose = true, options)
 
 - [x] implement basic structure in Nim
 - [x] implement basic bisection algorithm and [AlefeldPotraShi](https://dx.doi.org/10.1090/s0025-5718-1993-1192965-2)
+- [x] implement all Bracketing algorithms
 - [ ] add tests
 - [ ] implement non-bracketing methods
 - [ ] clean up code and possibly restructure

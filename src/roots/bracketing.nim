@@ -1,4 +1,4 @@
-import math
+import math, tables
 import utils, findZero
 
   # types needed for bracketing
@@ -11,6 +11,8 @@ type
   A42* = object of AbstractAlefeldPotraShi
   AlefeldPotraShi* = object of AbstractAlefeldPotraShi
   Brent* = object of AbstractBracketing
+  FalsePosition* = object of AbstractBisection
+    g*: int
 
 const
   bracketing_error = """The interval [a,b] is not a bracketing interval.
@@ -23,9 +25,10 @@ proc middle[T: SomeNumber](x, y: T): float
 proc middle2[T, S: SomeFloat](a: T, b: S): float
 proc ipzero[T, S: SomeFloat](a, b, c, d: T, fa, fb, fc, fd: S, delta: T = T(0.0)): T
 proc newtonQuadratic[T, S: SomeFloat, R: SomeInteger](a, b, d: T, fa, fb, fd: S, k: R, delta: T = T(0.0)): T
+proc galdinoReduction(methods: FalsePosition, fa, fb, fx: float): float {.inline.}
 
 
-proc logStep*[T, S: SomeFloat, A: Bisection|BisectionExact](l: Tracks[T, S], M: A, state: UnivariateZeroState[T, S]) =
+proc logStep*[T, S: SomeFloat, A: AbstractBisection](l: Tracks[T, S], M: A, state: UnivariateZeroState[T, S]) =
   add(l.xs, state.xn0)
   add(l.xs, state.xn1)
 
@@ -963,7 +966,7 @@ proc findZero*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod, CF: CallableFun
     logStep(l, true, state, 1)
 
   while true:
-    when A is AbstractBisection or A is AbstractAlefeldPotraShi:
+    when A is Bisection or A is AbstractAlefeldPotraShi or A is BisectionExact:
       let
         val = assessConvergence(M, state, options)
     else:
@@ -1308,7 +1311,7 @@ proc updateState*[T, S: SomeFloat, CF: CallableFunction or proc(a: T): S](M: Bre
 
   return
 
-proc findBracket[T, S: SomeFloat, A: AbstractAlefeldPotraShi or BisectionExact](f: proc(a: T): S, x0: (T, T), methods: A = A42(), kwargs: varargs[UnivariateZeroOptions[T, T, S, S]]): (T, (T, T), bool) =
+proc findBracket*[T, S: SomeFloat, A: AbstractAlefeldPotraShi or BisectionExact](f: proc(a: T): S, x0: (T, T), methods: A = A42(), kwargs: varargs[UnivariateZeroOptions[T, T, S, S]]): (T, (T, T), bool) =
   let
     x = adjustBracket(x0)
     F = callableFunctions(f)
@@ -1325,3 +1328,89 @@ proc findBracket[T, S: SomeFloat, A: AbstractAlefeldPotraShi or BisectionExact](
   discard findZero(methods, F, options, state)
 
   return (state.xstar, (state.xn0, state.xn1), state.fxstar == S(0))
+
+
+# FalsePosition
+
+proc updateState*[T, S: SomeFloat, CF: CallableFunction or proc(a: T): S](M: FalsePosition, fs: CF, o: UnivariateZeroState[T, S], options: UnivariateZeroOptions[T, T, S, S]) =
+  var
+    (a, b) = (o.xn0, o.xn1)
+    (fa, fb) = (o.fxn0, o.fxn1)
+    tau = 1e-10
+
+  var
+    lambda = fb / (fb - fa)
+
+  if not(tau < abs(lambda) and abs(lambda) < 1 - tau):
+    lambda = 0.5
+
+  let
+    x = b - lambda * (b - a)
+  when fs is CallableFunction:
+    let
+      fx = fs.f(x)
+  else:
+    let
+      fx = fs(x)
+  incfn(o)
+  if fx == 0.0:
+    o.xn1 = x
+    o.fxn1 = fx
+    o.fConverged = true
+    return
+
+  if sgn(fx) * sgn(fb) < 0:
+    (a, fa) = (b, fb)
+  else:
+    fa = galdinoReduction(M, fa, fb, fx)
+
+  (b, fb) = (x, fx)
+
+  (o.xn0, o.xn1) = (a, b)
+  (o.fxn0, o.fxn1) = (fa, fb)
+  return
+
+var
+  galdino = initTable[int, proc(a, b, c: float): float]()
+
+galdino[1] = proc(fa, fb, fx: float): float =
+  return fa * fb / (fb + fx)
+
+galdino[2] = proc(fa, fb, fx: float): float =
+  return (fa - fb) / 2
+
+galdino[3] = proc(fa, fb, fx: float): float =
+  return (fa - fx) / (2.0 + fx / fb)
+
+galdino[4] = proc(fa, fb, fx: float): float =
+  return (fa - fx) / (1.0 + fx / fb)^2
+
+galdino[5] = proc(fa, fb, fx: float): float =
+  return (fa - fx) / (1.5 + fx / fb)^2
+
+galdino[6] = proc(fa, fb, fx: float): float =
+  return (fa - fx) / (2.0 + fx / fb)^2
+
+galdino[7] = proc(fa, fb, fx: float): float =
+  return (fa + fx) / (2.0 + fx / fb)^2
+
+galdino[8] = proc(fa, fb, fx: float): float =
+  return fa / 2
+
+galdino[9] = proc(fa, fb, fx: float): float =
+  return fa / (1.0 + fx / fb)^2
+
+galdino[10] = proc(fa, fb, fx: float): float =
+  return (fa - fx) / 4
+
+galdino[11] = proc(fa, fb, fx: float): float =
+  return fx * fa / (fb + fx)
+
+galdino[12] = proc(fa, fb, fx: float): float =
+  if fa * (1.0 - fx / fb) > 0.0:
+    return 1.0 - fx / fb
+  else:
+    return 0.5
+
+proc galdinoReduction(methods: FalsePosition, fa, fb, fx: float): float {.inline.} =
+  return galdino[methods.g](fa, fb, fx)
