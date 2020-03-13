@@ -52,7 +52,7 @@ type
     f*: F
     fp*: FP
     fpp*: FPP
-  ConvergenceError* = object of Exception
+  ConvergenceError* = object of ValueError
 
 # imports from C
 proc nextafterf*(a, b: cfloat): cfloat {.header: "<math.h>", importc: "nextafterf".}

@@ -3,7 +3,7 @@ import utils, findZero
 
   # types needed for bracketing
 type
-  InitialValueError* = object of Exception
+  InitialValueError* = object of ValueError
   AbstractBisection* = object of  AbstractBracketing
   Bisection* = object of AbstractBisection
   BisectionExact* = object of AbstractBisection
