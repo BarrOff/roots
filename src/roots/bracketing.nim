@@ -172,15 +172,13 @@ proc initState*[T: SomeFloat, A: AbstractBisection, CF: CallableFunction or proc
   return
 
 
-template defaultTolerances*(M: Bisection | BisectionExact) =
-  defaultTolerances[float, float](M)
 
-proc defaultTolerances*[T,S: SomeFloat](M: Bisection | BisectionExact): (T, T, S, S, int, int, bool) =
+proc defaultTolerances*[Ti, Si: SomeFloat](M: Bisection | BisectionExact, T: typedesc[Ti], S: typedesc[Si]): (Ti, Ti, Si, Si, int, int, bool) =
   let
-    xatol = T(0)
-    xrtol = T(1)
-    atol = 0.0
-    rtol = 0.0
+    xatol = Ti(0)
+    xrtol = Ti(0)
+    atol = Si(0)
+    rtol = Si(0)
     maxevals = high(int)
     maxfnevals = high(int)
     strict = true
@@ -626,10 +624,8 @@ proc initState*[T, S: SomeFloat, A: AbstractAlefeldPotraShi, CF: CallableFunctio
   state.convergenceFailed = false
 
 
-template defaultTolerances*[A: AbstractAlefeldPotraShi](M: A) =
-  defaultTolerances[float, float](M)
 
-proc defaultTolerances*[T, S: SomeFloat, A: AbstractAlefeldPotraShi](M: A): (T, T, S, S, int, int, bool) =
+proc defaultTolerances*(M: AbstractAlefeldPotraShi, T, S: typedesc): (T, T, S, S, int, int, bool) =
   let
     xatol = T(0.0)
     atol = S(0.0)
@@ -1369,6 +1365,12 @@ proc updateState*[T, S: SomeFloat, CF: CallableFunction or proc(a: T): S](M: Fal
   (o.xn0, o.xn1) = (a, b)
   (o.fxn0, o.fxn1) = (fa, fb)
   return
+
+template defaultTolerances*(M: FalsePosition): (float, float, float, float, int, int, bool) =
+  defaultTolerances(AbstractNonBracketing(), float, float)
+
+template defaultTolerances*[T, S: SomeFloat](M: FalsePosition, Ti: typedesc[T], Si: typedesc[S]): (T, T, S, S, int, int, bool) =
+  defaultTolerances(AbstractNonBracketing(), Ti, Si)
 
 var
   galdino = initTable[int, proc(a, b, c: float): float]()

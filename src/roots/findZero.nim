@@ -188,10 +188,10 @@ proc copyState*[T, S: SomeNumber](dst, src: UnivariateZeroState[T, S]) =
 # function evaluations is not capped, due to `maxfnevals=typemax(Int)`,
 # and `strict=false`.
 
-template defaultTolerances*[A: AbstractUnivariateZeroMethod](M: A) =
+template defaultTolerances*(M: AbstractUnivariateZeroMethod): (float, float, float, float, int, int, bool) =
   defaultTolerances(M, float, float)
 
-proc defaultTolerances*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod](M: A, Ti: typedesc[T], Si: typedesc[S]): (T, T, S, S, int, int, bool) =
+proc defaultTolerances*(M: AbstractNonBracketing, T, S: typedesc): (T, T, S, S, int, int, bool) =
   when sizeof(T) == 8:
     let
       xatol = nextafter(1.0, 2.0 ) - 1.0
