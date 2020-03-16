@@ -610,7 +610,10 @@ proc decideConvergence*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod, CF: Ca
         state.convergenceFailed = true
 
   if state.fConverged:
-    return state.xstar
+    when A is AbstractAlefeldPotraShi or A is Bisection or A is BisectionExact:
+      return state.xstar
+    else:
+      return state.xn1
 
   if state.convergenceFailed:
     return T(NaN * xn1)
