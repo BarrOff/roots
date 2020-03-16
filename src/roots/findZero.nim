@@ -74,9 +74,6 @@ proc nextafter*(a, b: cdouble): cdouble {.header: "<math.h>", importc: "nextafte
 
 
 # forward declarations
-proc decideConvergence*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod, CF: CallableFunction](M: A, F: CF,
-                                                                          state: UnivariateZeroState[T, S],
-                                                                          options: UnivariateZeroOptions[T, T, S, S]): T
 proc findZero*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod, CF: CallableFunction or proc(a: T): S](M: A, F: CF, state: UnivariateZeroState[T, S], l: Tracks[T, S]|NullTracks = Nulltracks())
 
 
@@ -115,7 +112,6 @@ proc initState*[T: SomeFloat, A: AbstractUnivariateZeroMethod, CF: CallableFunct
 
   return state
  
-# initState3 resembles the init_state! function of Julia
 ## This function is used to reset the state to an initial value
 ## As initializing a state is somewhat costly, this can be useful when many
 ## function calls would be used.

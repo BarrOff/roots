@@ -940,10 +940,6 @@ proc updateState[T, S: SomeFloat, CF: CallableFunction or proc(a: T): S](M: Alef
   return
 
 
-# the following methods have been moved here from findZero.nim
-# because parts of them are implemented here and can not be lazily
-# declared as in Julia
-
 proc findZero*[T, S: SomeFloat](f: proc(a: S): T, x0: (S, S), verbose = false, kwargs: varargs[UnivariateZeroOptions[T, T, T, T]]): T =
   let M = Bisection()
   if len(kwargs) == 0:
