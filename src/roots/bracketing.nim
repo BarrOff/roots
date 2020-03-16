@@ -19,10 +19,13 @@ proc findZero*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod, CF: CallableFun
 
 
 proc logStep*[T, S: SomeFloat, A: AbstractBisection](l: Tracks[T, S], M: A, state: UnivariateZeroState[T, S]) =
+  ## generic `logStep` function for type AbstractBisection
   add(l.xs, state.xn0)
   add(l.xs, state.xn1)
 
 proc adjustBracket[T: SomeFloat](x0: (T, T)): (T, T) =
+  ## takes care that both bracketing values are finite
+  ## and returns a sorted tuple
   var
     (u, v) = x0
 
@@ -47,6 +50,9 @@ proc adjustBracket[T: SomeFloat](x0: (T, T)): (T, T) =
 
 
 proc initState*[T: SomeFloat, A: AbstractBisection, CF: CallableFunction or proc (a: T): T](meth: A, fs: CF, x: (T, T)): UnivariateZeroState[T, T] =
+  ## Checks the initial bracketing values for different sign
+  ## of their function values. Returns InitialValueError if
+  ## same sign, otherwise returns initial state reference.
   let
     (x0, x1) = adjustBracket(x)
 
@@ -65,6 +71,7 @@ proc initState*[T: SomeFloat, A: AbstractBisection, CF: CallableFunction or proc
   return initState(meth, fs, (x0, x1), (fx0, fx1))
 
 proc initState*[T: SomeFloat, A: AbstractBisection, CF: CallableFunction or proc (a: T): T](meth: A, fs: CF, xs, fxs: (T, T)): UnivariateZeroState[T, T] =
+  ## Creates state reference using `xs`and `fxs`.
   let
     (x0, x1) = xs
     (fx0, fx1) = fxs
@@ -93,6 +100,8 @@ proc initState*[T: SomeFloat, A: AbstractBisection, CF: CallableFunction or proc
   return state
 
 proc initState*[T: SomeFloat, A: AbstractBisection, CF: CallableFunction or proc (a: T): T](state: UnivariateZeroState[T, T], M: A, fs: CF, xs: (T, T)) =
+  ## creates function values `fxs` for `xs`, then uses `xs` and `fxs`
+  ## to initialise the state reference.
   let
     (x0, x1) = xs
 
@@ -164,6 +173,8 @@ proc initState*[T: SomeFloat, A: AbstractBisection, CF: CallableFunction or proc
 
 
 proc defaultTolerances*[Ti, Si: SomeFloat](M: Bisection | BisectionExact, T: typedesc[Ti], S: typedesc[Si]): (Ti, Ti, Si, Si, int, int, bool) =
+  ## creates a tuple of default option values for
+  ## `Bisection` and `BisectionExact` algorithms.
   let
     xatol = Ti(0)
     xrtol = Ti(0)
@@ -620,6 +631,8 @@ proc initState*[T, S: SomeFloat, A: AbstractAlefeldPotraShi, CF: CallableFunctio
 
 
 proc defaultTolerances*(M: AbstractAlefeldPotraShi, T, S: typedesc): (T, T, S, S, int, int, bool) =
+  ## creates a tuple of default option values for
+  ## `AbstractAlefeldPotraShi` algorithms.
   let
     xatol = T(0.0)
     atol = S(0.0)
@@ -1126,6 +1139,9 @@ proc logStep*[T, S: SomeFloat](l: Tracks[T, S], M: Brent, state: UnivariateZeroS
   return
 
 proc initState*[T: SomeFloat, CF: CallableFunction or proc(a: T): float](M: Brent, f: CF, xs: (T, T)): UnivariateZeroState[T, float] =
+  ## creates a new state reference for use with Brent algorithm.
+  ## Checks the initial bracket for different signs of function values.
+  ## Raises error for unsuitable bracket.
   let
     u = xs[0]
     v = xs[1]
@@ -1178,6 +1194,8 @@ proc initState*[T: SomeFloat, CF: CallableFunction or proc(a: T): float](M: Bren
   return state
 
 proc initState*[T, S: SomeFloat, CF: CallableFunction or proc(a: T): S](state: UnivariateZeroState[T, S], M: Brent, f: CF, xs: (T, T)) =
+  ## Configures state to use `xs` as initial bracket for Brent algorithm.
+  ## If `xs` is no suitable bracket, an `InitialValueError` is raised.
   let
     u = xs[0]
     v = xs[1]
@@ -1221,6 +1239,7 @@ proc initState*[T, S: SomeFloat, CF: CallableFunction or proc(a: T): S](state: U
 
 
 proc updateState*[T, S: SomeFloat, CF: CallableFunction or proc(a: T): S](M: Brent, f: CF, state: UnivariateZeroState[T, S], options: UnivariateZeroOptions[T, T, S, S]) =
+  ## update the `state` variable to the next step of Brent algorithm.
   var
     mflag = state.fm[1] > 0.0
     a = state.xn0
@@ -1323,6 +1342,7 @@ proc findBracket*[T, S: SomeFloat, A: AbstractAlefeldPotraShi or BisectionExact]
 # FalsePosition
 
 proc updateState*[T, S: SomeFloat, CF: CallableFunction or proc(a: T): S](M: FalsePosition, fs: CF, o: UnivariateZeroState[T, S], options: UnivariateZeroOptions[T, T, S, S]) =
+  ## update the `state` variable to the next step of FalsePosition algorithm.
   var
     (a, b) = (o.xn0, o.xn1)
     (fa, fb) = (o.fxn0, o.fxn1)
@@ -1361,9 +1381,11 @@ proc updateState*[T, S: SomeFloat, CF: CallableFunction or proc(a: T): S](M: Fal
   return
 
 template defaultTolerances*(M: FalsePosition): (float, float, float, float, int, int, bool) =
+  ## FalsePosition uses the generic generic `defautlTolerances` proc
   defaultTolerances(AbstractNonBracketing(), float, float)
 
 template defaultTolerances*[T, S: SomeFloat](M: FalsePosition, Ti: typedesc[T], Si: typedesc[S]): (T, T, S, S, int, int, bool) =
+  ## FalsePosition uses the generic generic `defautlTolerances` proc
   defaultTolerances(AbstractNonBracketing(), Ti, Si)
 
 var
@@ -1409,4 +1431,5 @@ galdino[12] = proc(fa, fb, fx: float): float =
     return 0.5
 
 proc galdinoReduction(methods: FalsePosition, fa, fb, fx: float): float {.inline.} =
+  ## Applies galdino function set up in methods to `fa`, `fb` and `fx`
   return galdino[methods.g](fa, fb, fx)
