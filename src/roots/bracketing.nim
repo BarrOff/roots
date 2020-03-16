@@ -8,11 +8,14 @@ const
 
 # forward declarations
 
-proc middle[T: SomeNumber](x, y: T): float
-proc middle2[T, S: SomeFloat](a: T, b: S): float
+proc middle[T: SomeNumber](x, y: T): T
+proc middle2[T: SomeInteger](a, b: T): float
+proc middle2(a, b: float): float
+proc middle2(a, b: float32): float32
 proc ipzero[T, S: SomeFloat](a, b, c, d: T, fa, fb, fc, fd: S, delta: T = T(0.0)): T
 proc newtonQuadratic[T, S: SomeFloat, R: SomeInteger](a, b, d: T, fa, fb, fd: S, k: R, delta: T = T(0.0)): T
 proc galdinoReduction(methods: FalsePosition, fa, fb, fx: float): float {.inline.}
+proc findZero*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod, CF: CallableFunction](M: A, F: CF, options: UnivariateZeroOptions[T, T, S, S], state: UnivariateZeroState[T, S], l: Tracks[T, S]|NullTracks = NullTracks()): T
 
 
 proc logStep*[T, S: SomeFloat, A: AbstractBisection](l: Tracks[T, S], M: A, state: UnivariateZeroState[T, S]) =
@@ -172,49 +175,53 @@ proc defaultTolerances*[Ti, Si: SomeFloat](M: Bisection | BisectionExact, T: typ
 
   return((xatol, xrtol, atol, rtol, maxevals, maxfnevals, strict))
 
-proc middle[T: SomeNumber](x, y: T): float =
+proc middle[T: SomeNumber](x, y: T): T =
   var
-    a, b: float
+    a, b: T
   if abs(x) == Inf:
     when sizeof(T) == 8:
       a = nextafter(cdouble(x), cdouble(0.0))
     else:
       a = nextafterf(cfloat(x), cfloat(0.0))
   else:
-    a = float(x)
+    a = x
   if y == Inf:
     when sizeof(T) == 8:
       b = nextafter(cdouble(y), cdouble(0.0))
     else:
       b = nextafterf(cfloat(y), cfloat(0.0))
   else:
-    b = float(y)
+    b = y
 
   if sgn(a) * sgn(b) < 0:
-    return 0.0
+    return T(0.0)
   else:
     return middle2(a, b)
 
-proc middle2[T, S: SomeFloat](a: T, b: S): float =
-  let
-    s = sizeof(S)
-    t = sizeof(T)
-
-  if s == t:
-    # let
-    #   x = toInt(a)
-    #   y = toInt(b)
-    #   z = x + y
-
-    # return toFloat(z shr 1)
-    return 0.5 * a + 0.5 * b
-  elif s < t:
-    return 0.5 * float(a) + 0.5 * b
-  else:
-    return 0.5 * a + 0.5 * float(b)
-
 proc middle2[T: SomeInteger](a, b: T): float =
   return 0.5 * float(a) + 0.5 * float(b)
+
+proc middle2[T: float32, S: uint32](t: typedesc[T], s: typedesc[S], a, b: T): T =
+  let
+    aInt = cast[S](a)
+    bInt = cast[S](b)
+    mid = (aInt + bInt) shr 1
+
+  return T(sgn(a + b)) * cast[T](mid)
+
+proc middle2[T: float, S: uint](t: typedesc[T], s: typedesc[S], a, b: T): T =
+  let
+    aInt = cast[S](a)
+    bInt = cast[S](b)
+    mid = (aInt + bInt) shr 1
+
+  return T(sgn(a + b)) * cast[T](mid)
+
+proc middle2(a, b: float): float =
+  return middle2(float, uint, a, b)
+
+proc middle2(a, b: float32): float32 =
+  return middle2(float32, uint32, a, b)
 
 proc assessConvergence*[T, S: SomeFloat](M: Bisection, state: UnivariateZeroState[T, S], options: UnivariateZeroOptions[T, T, S, S]): bool =
   var
