@@ -1,4 +1,4 @@
-import math
+import math, sequtils
 
 type
   # Methods
@@ -276,16 +276,18 @@ proc logStep*[T, S: SomeFloat](s: Tracks[T, S], M: bool, o: UnivariateZeroState[
   logStep(s, M, o)
 
 proc showTracks*[T, S: SomeFloat, A: AbstractBracketing](l: Tracks[T, S], M: A) =
-  when M is AbstractBracketing:
-    var
-      xs = l.xs
-      n = len(xs)
-    
-    echo "TO BE DONE!"
-    return
-  else:
-    for i in 0..high(s.xs):
-      echo i, ": xs = ", s.xs[i], " fs: ", s.fs[i]
+  var
+    xs = l.xs
+    n = len(xs) div 2 - 1
+    j = 0
+  for i in 0..n:
+    echo "(a_", i, ", b_", i, ") = (", xs[j], ", ",xs[j + 1], ")"
+    j += 2
+  return
+
+proc showTracks*[T, S: SomeFloat, A: AbstractNonBracketing](s: Tracks[T, S], M: A) =
+    for index, item in zip(s.xs, s.fs):
+      echo "x_", index, " = ", float(item[0]), ",\t fx_", index, " = ", float(item[1])
     echo ""
     return
 
@@ -421,7 +423,7 @@ proc assessConvergence*[T, S: SomeFloat](methodes: bool, state: UnivariateZeroSt
 
   return false
 
-proc showTrace*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod, B: AbstractBracketing](methodes: A, N: B = NoMethod(), state: UnivariateZeroState[T, S], tracks: Tracks[T, S]) =
+proc showTrace*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod, B: AbstractBracketing|NoMethod](methodes: A, N: B = NoMethod(), state: UnivariateZeroState[T, S], tracks: Tracks[T, S]) =
   let
     converged = state.xConverged or state.fConverged
 
