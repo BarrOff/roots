@@ -12,6 +12,8 @@ suite "float: bracketing Tests":
   setup:
     proc f(x: float): float =
       return exp(x) - x^4
+    proc f1(x: float): float =
+      return sinh(x - 2.0) + x^2 - 4.5 * x + 4.5
 
   test "default settings":
     let
@@ -21,29 +23,39 @@ suite "float: bracketing Tests":
   test "default settings for A42":
     let
       z = findZero(f, (8.0, 9.0), A42())
+      z1 = findZero(f1, (-0.5, 2.0), A42())
     check(z == 8.613169456441399)
+    check(z1 == 0.8282194527125697)
 
   test "default settings for AlefeldPotraShi":
     let
       z = findZero(f, (8.0, 9.0), AlefeldPotraShi())
+      z1 = findZero(f1, (-0.5, 2.0), AlefeldPotraShi())
     check(z == 8.613169456441399)
+    check(z1 == 0.8282194527125698)
 
   test "default settings for Bisection":
     let
       z1 = findZero(f, (8.0, 9.0))
       z2 = findZero(f, (8.0, 9.0), Bisection())
+      z3 = findZero(f1, (-0.5, 2.0), Bisection())
     check(z1 == z2)
     check(z2 == 8.613169456441399)
+    check(z3 == 0.8282194527125697)
 
   test "default settings for BisectionExact":
     let
       z = findZero(f, (8.0, 9.0), BisectionExact())
+      z1 = findZero(f1, (-0.5, 2.0), BisectionExact())
     check(z == 8.613169456441399)
+    check(z1 == 0.8282194527125695)
 
   test "default settings for FalsePosition":
     let
       z = findZero(f, (8.0, 9.0), FalsePosition(g: 12))
+      z1 = findZero(f1, (-0.5, 2.0), FalsePosition(g: 12))
     check(z != 8.613169456441399)
+    check(z1 == 0.8282194527125698)
 
 suite "int: bracketing Tests":
   setup:
