@@ -8,6 +8,20 @@ type
   AbstractNonBracketing* = object of AbstractUnivariateZeroMethod
   AbstractSecant* = object of AbstractNonBracketing
 
+  # types needed for bracketing
+type
+  InitialValueError* = object of ValueError
+  AbstractBisection* = object of  AbstractBracketing
+  Bisection* = object of AbstractBisection
+  BisectionExact* = object of AbstractBisection
+  AbstractAlefeldPotraShi* = object of AbstractBracketing
+  A42* = object of AbstractAlefeldPotraShi
+  AlefeldPotraShi* = object of AbstractAlefeldPotraShi
+  Brent* = object of AbstractBracketing
+  FalsePosition* = object of AbstractBisection
+    ## This algorithm needs an int field to store the chosen galdino function
+    g*: int ## g stores the chosen galdino function
+
   # States
   AbstractUnivariateZeroState* = ref object of RootObj
   UnivariateZeroState*[T, S] = ref object of AbstractUnivariateZeroState

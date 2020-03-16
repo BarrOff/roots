@@ -1,19 +1,6 @@
 import math, tables
 import utils, findZero
 
-  # types needed for bracketing
-type
-  InitialValueError* = object of ValueError
-  AbstractBisection* = object of  AbstractBracketing
-  Bisection* = object of AbstractBisection
-  BisectionExact* = object of AbstractBisection
-  AbstractAlefeldPotraShi* = object of AbstractBracketing
-  A42* = object of AbstractAlefeldPotraShi
-  AlefeldPotraShi* = object of AbstractAlefeldPotraShi
-  Brent* = object of AbstractBracketing
-  FalsePosition* = object of AbstractBisection
-    g*: int
-
 const
   bracketing_error = """The interval [a,b] is not a bracketing interval.
   You need f(a) and f(b) to have different signs (f(a) * f(b) < 0).
