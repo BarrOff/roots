@@ -1425,10 +1425,10 @@ galdino[11] = proc(fa, fb, fx: float): float =
   return fx * fa / (fb + fx)
 
 galdino[12] = proc(fa, fb, fx: float): float =
-  if fa * (1.0 - fx / fb) > 0.0:
-    return 1.0 - fx / fb
+  if (1.0 - fx / fb) > 0.0:
+    return fa * (1.0 - fx / fb)
   else:
-    return 0.5
+    return fa * 0.5
 
 proc galdinoReduction(methods: FalsePosition, fa, fb, fx: float): float {.inline.} =
   ## Applies galdino function set up in methods to `fa`, `fb` and `fx`
