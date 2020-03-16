@@ -16,6 +16,7 @@ proc ipzero[T, S: SomeFloat](a, b, c, d: T, fa, fb, fc, fd: S, delta: T = T(0.0)
 proc newtonQuadratic[T, S: SomeFloat, R: SomeInteger](a, b, d: T, fa, fb, fd: S, k: R, delta: T = T(0.0)): T
 proc galdinoReduction(methods: FalsePosition, fa, fb, fx: float): float {.inline.}
 proc findZero*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod, CF: CallableFunction](M: A, F: CF, options: UnivariateZeroOptions[T, T, S, S], state: UnivariateZeroState[T, S], l: Tracks[T, S]|NullTracks = NullTracks()): T
+proc findZero*[T, S: SomeFloat, AM: AbstractUnivariateZeroMethod, AN: AbstractBracketing, CF: CallableFunction](M: AM, N: AN, F: CF, options: UnivariateZeroOptions[T, T, S, S], state: UnivariateZeroState[T, S], l: Tracks[T, S]|NullTracks = NullTracks())
 
 
 proc logStep*[T, S: SomeFloat, A: AbstractBisection](l: Tracks[T, S], M: A, state: UnivariateZeroState[T, S]) =
@@ -324,7 +325,7 @@ proc updateState*[T: SomeFloat, CF: CallableFunction or proc (a: T): T](M: Bisec
 
   return
 
-proc findZero*[T, S: SomeFloat, A: AbstractBracketing, AT: Tracks[T, S] or NullTracks, CF: CallableFunction](fs: CF, x0: (T, S), methods: A, tracks: AT = NullTracks(), verbose = false, kwargs: varargs[UnivariateZeroOptions[T, T, S, S]]): float =
+proc findZero*[T, S: SomeFloat, AT: Tracks[T, S] or NullTracks, CF: CallableFunction](fs: CF, x0: (T, S), methods: Bisection, tracks: AT = NullTracks(), verbose = false, kwargs: varargs[UnivariateZeroOptions[T, T, S, S]]): float =
   let
     x = adjustBracket(x0)
     F = callable_functions(fs)
@@ -375,7 +376,7 @@ proc findZero*[T, S: SomeFloat, A: AbstractBracketing, AT: Tracks[T, S] or NullT
 
   return state.xstar
 
-proc findZero*[T, S: SomeFloat, A: AbstractBracketing, AT: Tracks[T, S] or NullTracks](fs: proc (a: T): S, x0: (T, S), methods: A, tracks: AT = NullTracks(), verbose = false, kwargs: varargs[UnivariateZeroOptions[T, T, S, S]]): float =
+proc findZero*[T, S: SomeFloat, AT: Tracks[T, S] or NullTracks](fs: proc (a: T): S, x0: (T, S), methods: Bisection, tracks: AT = NullTracks(), verbose = false, kwargs: varargs[UnivariateZeroOptions[T, T, S, S]]): float =
 
   let
     x = adjustBracket(x0)
@@ -400,7 +401,7 @@ proc findZero*[T, S: SomeFloat, A: AbstractBracketing, AT: Tracks[T, S] or NullT
     new(l)
     if iszeroTol:
       let M: A42 = A42()
-      return findZero(F, x, M, l, verbose)
+      return findZero(F, x, M, tracks = l, verbose = verbose)
 
     discard findZero(methods, F, options, state, l)
 
@@ -416,7 +417,7 @@ proc findZero*[T, S: SomeFloat, A: AbstractBracketing, AT: Tracks[T, S] or NullT
 
     if iszeroTol:
       let M: A42 = A42()
-      return findZero(F, x, M, l, verbose)
+      return findZero(F, x, M, tracks = l, verbose = verbose)
 
     discard findZero(methods, F, options, state, l)
 
@@ -425,7 +426,7 @@ proc findZero*[T, S: SomeFloat, A: AbstractBracketing, AT: Tracks[T, S] or NullT
         var M: AbstractBracketing
         showTrace(methods, M, state, l)
 
-  return state.xn1
+  return state.xstar
 
 proc findZero*[T, S: SomeInteger, R: SomeFloat, A: AbstractBracketing](fs: proc(a: R): float, x0: (T, S), M: A, verbose = false, kwargs: varargs[UnivariateZeroOptions[float, float, float, float]]): float =
   if len(kwargs) == 0:
@@ -950,170 +951,12 @@ proc findZero*[T, S: SomeFloat](f: proc(a: S): T, x0: (S, S), verbose = false, k
   return findZero(f, x0, M, verbose = verbose, kwargs = kwargs[0])
 
 proc runBisection*[T, S](f: proc(a: T): S, xs: (T, T),
-                        state: UnivariateZeroState[T, S],
-                        options: UnivariateZeroOptions[T, T, S, S]) =
+                         state: UnivariateZeroState[T, S],
+                         options: UnivariateZeroOptions[T, T, S, S]) =
   var
     M: AlefeldPotraShi
 
   runBisection(M, f, xs, state, options)
-
-# Main method
-# return a zero or NaN.
-## Updates state, could be `find_zero!(state, M, F, options, l)...
-proc findZero*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod, CF: CallableFunction](M: A, F: CF, options: UnivariateZeroOptions[T, T, S, S], state: UnivariateZeroState[T, S], l: Tracks[T, S]|NullTracks = NullTracks()): T =
-  when l is NullTracks:
-    logStep(l)
-  elif M is AbstractAlefeldPotraShi:
-    logStep(l, M, state)
-  else:
-    logStep(l, true, state, 1)
-
-  while true:
-    when A is Bisection or A is AbstractAlefeldPotraShi or A is BisectionExact:
-      let
-        val = assessConvergence(M, state, options)
-    else:
-      let
-        val = assessConvergence(true, state, options)
-    if val:
-      break
-    updateState(M, F, state, options)
-    when l is NullTracks:
-      logStep(l)
-    else:
-      logStep(l, M, state)
-    incsteps(state)
-
-  return decideConvergence(M, F, state, options)
-
-
-# Robust version using some tricks: idea from algorithm described in
-# [The SOLVE button from the
-# HP-34]C(http://www.hpl.hp.com/hpjournal/pdfs/IssuePDFs/1979-12.pdf).
-# * use bracketing method if one identifed
-# * limit steps so as not too far or too near the previous one
-# * if not decreasing, use a quad step upto 4 times to bounce out of trap, if possible
-# First uses M, then N if bracket is identified
-proc findZero*[T, S: SomeFloat, AM, AN: AbstractUnivariateZeroMethod, CF: CallableFunction](M: AM, N: AN, F: CF, options: UnivariateZeroOptions[T, T, S, S], state: UnivariateZeroState[T, S], l: Tracks[T, S]|NullTracks = NullTracks()) =
-  when l is NullTracks:
-    logStep(l)
-  elif M is AbstractAlefeldPotraShi:
-    logStep(l, M, state)
-  else:
-    logStep(l, true, state, 1)
-  let
-    state0 = copyState(state)
-    quadCtr = 0
-
-  while true:
-
-    when AM is AbstractBisection or AM is AbstractAlefeldPotraShi:
-      if assessConvergence(M, state, options):
-        break
-    else:
-      if assessConvergence(true, state, options):
-        break
-
-    copyState(state0, state)
-    updateState(M, F, state0, options)
-
-    var
-      adj = false
-
-    ## did we find a zero or a bracketing interval?
-    if state0.fxn1 == 0.0:
-      copyState(state, state0)
-      (state.xstar, state.fxstar) = (state.xn1, state.fxn1)
-      state.fConverged = true
-      break
-    elif sgn(state0.fxn0) * sgn(state0.fxn1) < 0:
-      copyState(state, state0)
-      var
-        a = state0.xn0
-        b = state0.xn1
-      runBisection(N, F, (a, b), state, options)
-      break
-    else:
-      discard
-
-    ## did we move too far?
-    var
-      r = state0.xn1
-      a = state.xn0
-      b = state.xn1
-      deltaR = abs(r - b)
-      deltaX = abs(r - a)
-      ts = 1e-3
-      TB = 1e2
-
-    if deltaR >= TB * deltaX:
-      adj = true
-      r = b + sgn(r - b) * TB * deltaX
-      state0.xn1 = r
-      state0.fxn1 = F.f(r)
-      incfn(state)
-    elif deltaR <= ts * deltaX:
-      adj = true
-      r = b + sgn(r - b) * ts * deltaX
-      var
-        fr = F.f(r)
-      incfn(state)
-      state0.xn1 = r
-      state0.fxn1 = fr
-    else:
-      discard
-
-    # a sign change after shortening?
-    if sgn(state.fxn1) * sgn(state0.fxn1) < 0:
-      state.xn0 = state.xn1
-      state.fxn0 = state.fxn1
-      a = state.xn0
-      b = state.xn1
-      runBisection(N, F, (a, b), state, options)
-      break
-
-    ## did we improve?
-    if adj or abs(state0.fxn1) < abs(state.fxn1):
-      if state0.xn1 == NaN or state0.fxn1 == NaN or abs(state0.xn1) == Inf or abs(state0.fxn1) == Inf:
-        break
-
-      copyState(state, state0)
-      when l is NullTracks:
-        logStep(l)
-      else:
-        logStep(l, M, state)
-      incsteps(state)
-      quadCtr = 0
-      continue
-
-    if quadCtr > 4:
-      copyState(state, state0)
-      state.stopped = true
-      break
-    else:
-      quadCtr += 1
-      r = quadVertex(state0.xn1, state0.fxn1, state.xn1, state.fxn1, state.xn0, state.fxn0)
-
-      if r == NaN or abs(r) == Inf:
-        copyState(state, state0)
-      else:
-
-        var
-          fr2 = F.f(r)
-        incfn(state)
-
-        state0.xn1 = r
-        state0.fxn1 = fr2
-        incfn(state)
-        copyState(state, state0)
-
-      when l is NullTracks:
-        logStep(l)
-      else:
-        logStep(l, M, state)
-      incsteps(state)
-
-    decideConvergence(M, F, state, options)
 
 # Roots.Brent()
 
@@ -1433,3 +1276,167 @@ galdino[12] = proc(fa, fb, fx: float): float =
 proc galdinoReduction(methods: FalsePosition, fa, fb, fx: float): float {.inline.} =
   ## Applies galdino function set up in methods to `fa`, `fb` and `fx`
   return galdino[methods.g](fa, fb, fx)
+
+
+
+# the following methods have been moved here from findZero.nim
+# because parts of them are implemented here and can not be lazily
+# declared as in Julia
+
+
+# Updates state, could be `find_zero!(state, M, F, options, l)...
+proc findZero*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod, CF: CallableFunction](M: A, F: CF, options: UnivariateZeroOptions[T, T, S, S], state: UnivariateZeroState[T, S], l: Tracks[T, S]|NullTracks = NullTracks()): T =
+  ## Main method
+  ## return a zero or NaN.
+  when l is NullTracks:
+    logStep(l)
+  elif M is AbstractAlefeldPotraShi:
+    logStep(l, M, state)
+  else:
+    logStep(l, true, state, 1)
+
+  while true:
+    when A is Bisection or A is AbstractAlefeldPotraShi or A is BisectionExact:
+      let
+        val = assessConvergence(M, state, options)
+    else:
+      let
+        val = assessConvergence(true, state, options)
+    if val:
+      break
+    updateState(M, F, state, options)
+    when l is NullTracks:
+      logStep(l)
+    else:
+      logStep(l, M, state)
+    incsteps(state)
+
+  return decideConvergence(M, F, state, options)
+
+# Robust version using some tricks: idea from algorithm described in
+# [The SOLVE button from the
+# HP-34]C(http://www.hpl.hp.com/hpjournal/pdfs/IssuePDFs/1979-12.pdf).
+# * use bracketing method if one identifed
+# * limit steps so as not too far or too near the previous one
+# * if not decreasing, use a quad step upto 4 times to bounce out of trap, if possible
+# First uses M, then N if bracket is identified
+proc findZero*[T, S: SomeFloat, AM: AbstractUnivariateZeroMethod, AN: AbstractBracketing, CF: CallableFunction](M: AM, N: AN, F: CF, options: UnivariateZeroOptions[T, T, S, S], state: UnivariateZeroState[T, S], l: Tracks[T, S]|NullTracks = NullTracks()) =
+  when l is NullTracks:
+    logStep(l)
+  elif M is AbstractAlefeldPotraShi:
+    logStep(l, M, state)
+  else:
+    logStep(l, true, state, 1)
+  let
+    state0 = copyState(state)
+    quadCtr = 0
+
+  while true:
+
+    when AM is AbstractBisection or AM is AbstractAlefeldPotraShi:
+      if assessConvergence(M, state, options):
+        break
+    else:
+      if assessConvergence(true, state, options):
+        break
+
+    copyState(state0, state)
+    updateState(M, F, state0, options)
+
+    var
+      adj = false
+
+    ## did we find a zero or a bracketing interval?
+    if state0.fxn1 == 0.0:
+      copyState(state, state0)
+      (state.xstar, state.fxstar) = (state.xn1, state.fxn1)
+      state.fConverged = true
+      break
+    elif sgn(state0.fxn0) * sgn(state0.fxn1) < 0:
+      copyState(state, state0)
+      var
+        a = state0.xn0
+        b = state0.xn1
+      runBisection(N, F, (a, b), state, options)
+      break
+    else:
+      discard
+
+    ## did we move too far?
+    var
+      r = state0.xn1
+      a = state.xn0
+      b = state.xn1
+      deltaR = abs(r - b)
+      deltaX = abs(r - a)
+      ts = 1e-3
+      TB = 1e2
+
+    if deltaR >= TB * deltaX:
+      adj = true
+      r = b + sgn(r - b) * TB * deltaX
+      state0.xn1 = r
+      state0.fxn1 = F.f(r)
+      incfn(state)
+    elif deltaR <= ts * deltaX:
+      adj = true
+      r = b + sgn(r - b) * ts * deltaX
+      var
+        fr = F.f(r)
+      incfn(state)
+      state0.xn1 = r
+      state0.fxn1 = fr
+    else:
+      discard
+
+    # a sign change after shortening?
+    if sgn(state.fxn1) * sgn(state0.fxn1) < 0:
+      state.xn0 = state.xn1
+      state.fxn0 = state.fxn1
+      a = state.xn0
+      b = state.xn1
+      runBisection(N, F, (a, b), state, options)
+      break
+
+    ## did we improve?
+    if adj or abs(state0.fxn1) < abs(state.fxn1):
+      if state0.xn1 == NaN or state0.fxn1 == NaN or abs(state0.xn1) == Inf or abs(state0.fxn1) == Inf:
+        break
+
+      copyState(state, state0)
+      when l is NullTracks:
+        logStep(l)
+      else:
+        logStep(l, M, state)
+      incsteps(state)
+      quadCtr = 0
+      continue
+
+    if quadCtr > 4:
+      copyState(state, state0)
+      state.stopped = true
+      break
+    else:
+      quadCtr += 1
+      r = quadVertex(state0.xn1, state0.fxn1, state.xn1, state.fxn1, state.xn0, state.fxn0)
+
+      if r == NaN or abs(r) == Inf:
+        copyState(state, state0)
+      else:
+
+        var
+          fr2 = F.f(r)
+        incfn(state)
+
+        state0.xn1 = r
+        state0.fxn1 = fr2
+        incfn(state)
+        copyState(state, state0)
+
+      when l is NullTracks:
+        logStep(l)
+      else:
+        logStep(l, M, state)
+      incsteps(state)
+
+    decideConvergence(M, F, state, options)
