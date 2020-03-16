@@ -661,7 +661,7 @@ proc checkZero*[T, S: SomeFloat, A: AbstractBracketing](M: A, state: UnivariateZ
     state.xn1 = c
     state.message &= "Inf encountered. "
     return true
-  elif c == T(0):
+  elif fc == T(0):
     state.stopped = true
     state.message &= "Exact zero found. "
     state.xstar = c
