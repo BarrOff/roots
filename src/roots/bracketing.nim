@@ -1219,12 +1219,12 @@ proc updateState*[T, S: SomeFloat, CF: CallableFunction or proc(a: T): S](M: Fal
   (o.fxn0, o.fxn1) = (fa, fb)
   return
 
-template defaultTolerances*(M: FalsePosition): (float, float, float, float, int, int, bool) =
-  ## FalsePosition uses the generic generic `defautlTolerances` proc
+template defaultTolerances*(M: FalsePosition|Brent): (float, float, float, float, int, int, bool) =
+  ## FalsePosition and Brent use the generic generic `defautlTolerances` proc
   defaultTolerances(AbstractNonBracketing(), float, float)
 
-template defaultTolerances*[T, S: SomeFloat](M: FalsePosition, Ti: typedesc[T], Si: typedesc[S]): (T, T, S, S, int, int, bool) =
-  ## FalsePosition uses the generic generic `defautlTolerances` proc
+template defaultTolerances*[T, S: SomeFloat](M: FalsePosition|Brent, Ti: typedesc[T], Si: typedesc[S]): (T, T, S, S, int, int, bool) =
+  ## FalsePosition and Brent use the generic generic `defautlTolerances` proc
   defaultTolerances(AbstractNonBracketing(), Ti, Si)
 
 var
