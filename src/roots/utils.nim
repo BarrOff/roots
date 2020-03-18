@@ -69,7 +69,7 @@ proc quadVertex*[T, S: SomeFloat](c: T, fc: S, b: T, fb: S, a: T, fa: S): T =
     fba = (fb - fa) / (b - a)
     fbc = (fb - fc) / (b - c)
 
-  return 0.5 * ((a + b) - fba / (fbc -fba) * (c - a))
+  return 0.5 * ((a + b) - fba / (fbc - fba) * (c - a))
 
 proc fbracket*[T: SomeFloat](a, b, fa, fb: T): (T, bool) =
   let
