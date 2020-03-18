@@ -89,13 +89,17 @@ proc fbracketDiff*[T: SomeFloat](a, b, c, fa, fb, fc: T): (T, bool) =
     return (x1, issue)
 
   var
-    (x2, issue) = fbracket(a, b, fa, fb)
+    x2: typeof(x1)
+
+  (x2, issue) = fbracket(a, b, fa, fb)
 
   if issue:
     return (x2, issue)
 
   var
-    (x3, issue) = fbracket(a, c, fa, fc)
+    x3: typeof(x1)
+
+  (x3, issue) = fbracket(a, c, fa, fc)
 
   if issue:
     return (x3, issue)
