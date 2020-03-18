@@ -1281,7 +1281,7 @@ proc galdinoReduction(methods: FalsePosition, fa, fb, fx: float): float {.inline
 
 
 # Updates state, could be `find_zero!(state, M, F, options, l)...
-proc findZero*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod, CF: CallableFunction](M: A, F: CF, options: UnivariateZeroOptions[T, T, S, S], state: UnivariateZeroState[T, S], l: Tracks[T, S]|NullTracks = NullTracks()): T =
+proc findZero*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod, CF: CallableFunction[T, S]](M: A, F: CF, options: UnivariateZeroOptions[T, T, S, S], state: UnivariateZeroState[T, S], l: Tracks[T, S]|NullTracks = NullTracks()): T =
   ## Main method
   ## return a zero or NaN.
   when l is NullTracks:
@@ -1303,8 +1303,10 @@ proc findZero*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod, CF: CallableFun
     updateState(M, F, state, options)
     when l is NullTracks:
       logStep(l)
-    else:
+    elif A is Bisection or A is AbstractAlefeldPotraShi or A is BisectionExact:
       logStep(l, M, state)
+    else:
+      logStep(l, true, state)
     incsteps(state)
 
   return decideConvergence(M, F, state, options)
@@ -1316,7 +1318,7 @@ proc findZero*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod, CF: CallableFun
 # * limit steps so as not too far or too near the previous one
 # * if not decreasing, use a quad step upto 4 times to bounce out of trap, if possible
 # First uses M, then N if bracket is identified
-proc findZero*[T, S: SomeFloat, AM: AbstractUnivariateZeroMethod, AN: AbstractBracketing, CF: CallableFunction](M: AM, N: AN, F: CF, options: UnivariateZeroOptions[T, T, S, S], state: UnivariateZeroState[T, S], l: Tracks[T, S]|NullTracks = NullTracks()) =
+proc findZero*[T, S: SomeFloat, AM: AbstractUnivariateZeroMethod, AN: AbstractBracketing, CF: CallableFunction[T, S]](M: AM, N: AN, F: CF, options: UnivariateZeroOptions[T, T, S, S], state: UnivariateZeroState[T, S], l: Tracks[T, S]|NullTracks = NullTracks()): T =
   when l is NullTracks:
     logStep(l)
   elif M is AbstractAlefeldPotraShi:
@@ -1325,6 +1327,7 @@ proc findZero*[T, S: SomeFloat, AM: AbstractUnivariateZeroMethod, AN: AbstractBr
     logStep(l, true, state, 1)
   let
     state0 = copyState(state)
+  var
     quadCtr = 0
 
   while true:
@@ -1338,7 +1341,6 @@ proc findZero*[T, S: SomeFloat, AM: AbstractUnivariateZeroMethod, AN: AbstractBr
 
     copyState(state0, state)
     updateState(M, F, state0, options)
-
     var
       adj = false
 
@@ -1357,7 +1359,6 @@ proc findZero*[T, S: SomeFloat, AM: AbstractUnivariateZeroMethod, AN: AbstractBr
       break
     else:
       discard
-
     ## did we move too far?
     var
       r = state0.xn1
@@ -1370,13 +1371,13 @@ proc findZero*[T, S: SomeFloat, AM: AbstractUnivariateZeroMethod, AN: AbstractBr
 
     if deltaR >= TB * deltaX:
       adj = true
-      r = b + sgn(r - b) * TB * deltaX
+      r = b + T(sgn(r - b)) * TB * deltaX
       state0.xn1 = r
       state0.fxn1 = F.f(r)
       incfn(state)
     elif deltaR <= ts * deltaX:
       adj = true
-      r = b + sgn(r - b) * ts * deltaX
+      r = b + T(sgn(r - b)) * ts * deltaX
       var
         fr = F.f(r)
       incfn(state)
@@ -1384,16 +1385,14 @@ proc findZero*[T, S: SomeFloat, AM: AbstractUnivariateZeroMethod, AN: AbstractBr
       state0.fxn1 = fr
     else:
       discard
-
     # a sign change after shortening?
     if sgn(state.fxn1) * sgn(state0.fxn1) < 0:
-      state.xn0 = state.xn1
-      state.fxn0 = state.fxn1
+      (state.xn0, state.fxn0) = (state.xn1, state.fxn1)
+      (state.xn1, state.fxn1) = (state0.xn1, state0.fxn1)
       a = state.xn0
       b = state.xn1
       runBisection(N, F, (a, b), state, options)
       break
-
     ## did we improve?
     if adj or abs(state0.fxn1) < abs(state.fxn1):
       if state0.xn1 == NaN or state0.fxn1 == NaN or abs(state0.xn1) == Inf or abs(state0.fxn1) == Inf:
@@ -1402,8 +1401,10 @@ proc findZero*[T, S: SomeFloat, AM: AbstractUnivariateZeroMethod, AN: AbstractBr
       copyState(state, state0)
       when l is NullTracks:
         logStep(l)
-      else:
+      elif M is Bisection or M is BisectionExact or M is AbstractAlefeldPotraShi:
         logStep(l, M, state)
+      else:
+        logStep(l, true, state)
       incsteps(state)
       quadCtr = 0
       continue
@@ -1431,8 +1432,10 @@ proc findZero*[T, S: SomeFloat, AM: AbstractUnivariateZeroMethod, AN: AbstractBr
 
       when l is NullTracks:
         logStep(l)
-      else:
+      elif M is Bisection or M is BisectionExact or M is AbstractAlefeldPotraShi:
         logStep(l, M, state)
+      else:
+        logStep(l, true, state)
       incsteps(state)
 
-    decideConvergence(M, F, state, options)
+  return decideConvergence(M, F, state, options)
