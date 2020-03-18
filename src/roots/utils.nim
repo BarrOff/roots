@@ -13,10 +13,10 @@ type
 
 # issue with approx derivative
 proc isIssue*[T: SomeInteger](x: T): bool =
-  return x == T(0)
+  return abs(x) == T(0)
 
 proc isIssue*[T: SomeFloat](x: T): bool =
-  return x == T(0) or x == T(Inf) or x == T(NaN)
+  return abs(x) == T(0) or abs(x) == T(Inf) or x == T(NaN)
 
 # of (a,fa), (b,fb) choose pair where |f| is smallest
 proc chooseSmallest*[T: SomeNumber](a, b, fa, fb: T): (T, T) {.inline.} =
