@@ -12,3 +12,5 @@ import roots/findZero
 export findZero
 import roots/bracketing
 export bracketing
+import roots/derivativeFree
+export derivativeFree
