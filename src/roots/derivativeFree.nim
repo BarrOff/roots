@@ -186,8 +186,9 @@ proc updateState*[T, S: SomeFloat, CF: CallableFunction[T, S]](methodes: Order1,
     (fxn0, fxn1) = (o.fxn0, o.fxn1)
 
     delta = fxn1 * (xn1 - xn0) / (fxn1 - fxn0)
+    fd = classify(abs(delta))
 
-  if delta == Inf or delta == NaN:
+  if fd == fcInf or fd == fcNan:
     o.stopped = true
     o.message = "Increment `Δx` has issues. "
     return
@@ -206,8 +207,9 @@ proc updateState*[T, S: SomeFloat](methodes: Order1, fs: proc(a: T): S, o: Univa
     (fxn0, fxn1) = (o.fxn0, o.fxn1)
 
     delta = fxn1 * (xn1 - xn0) / (fxn1 - fxn0)
+    fd = classify(abs(delta))
 
-  if delta == Inf or delta == NaN:
+  if fd == fcInf or fd == fcNan:
     o.stopped = true
     o.message = "Increment `Δx` has issues. "
     return
@@ -393,11 +395,11 @@ proc updateState*[T, S: SomeFloat](methodes: Steffensen, fs: proc(a: T): S, o: U
 # Order2B
 
 proc updateState*[T, S: SomeFloat, CF: CallableFunction[T, S]](methodes: Order2B, fs: CF, o: UnivariateZeroState[T, S], options: UnivariateZeroOptions[T, T, S, S]) =
-  updateState(methodes, Secant(), Esser(), fs, o, options)
+  updateStateGuarded(methodes, Secant(), Esser(), fs, o, options)
   return
 
 proc updateState*[T, S: SomeFloat](methodes: Order2B, fs: proc(a: T): S, o: UnivariateZeroState[T, S], options: UnivariateZeroOptions[T, T, S, S]) =
-  updateState(methodes, Secant(), Esser(), fs, o, options)
+  updateStateGuarded(methodes, Secant(), Esser(), fs, o, options)
   return
 
 proc updateState*[T, S: SomeFloat, CF: CallableFunction[T, S]](methodes: Esser, fs: CF, o: UnivariateZeroState[T, S], options: UnivariateZeroOptions[T, T, S, S]) =
@@ -406,16 +408,16 @@ proc updateState*[T, S: SomeFloat, CF: CallableFunction[T, S]](methodes: Esser, 
     (fx0, fx1) = (o.fxn0, o.fxn1)
 
     f0 = fx1
-    f1 = fs.f(S(x1) + f0)
-    fs1 = fs.f(S(x1) - f0)
+    f1 = fs.f(x1 + T(f0))
+    fs1 = fs.f(x1 - T(f0))
   incfn(o, 2)
 
   # h = f0
   # r1 = f/f' ~ f/f[x+h,x-h]
   # r2 = f'/f'' ~ f[x+h, x-h]/f[x-h,x,x+h]
   let
-    r1 = f0 * 2 * f0 / (f1 - f_1)
-    r2 = (f1 - f_1) / (f1 - 2 * f0 + f_1) * f0/2
+    r1 = f0 * 2 * f0 / (f1 - fs1)
+    r2 = (f1 - fs1) / (f1 - 2 * f0 + fs1) * f0/2
 
     k = r2 / (r2 - r1)  # ~ m
 
@@ -686,7 +688,7 @@ proc updateState*[T, S: SomeFloat, CF: CallableFunction[T, S]](M: Thukral8|Order
   let
     w = 1 / (S(1) - fzn / fwn)
     xi = (S(1) - 2 * fyn * fyn * fyn / (fwn * fwn * fxn))
-    xn1 = zn - w * xi * S(fzn / fp)
+    xn1 = zn - w * xi * T(fzn / fp)
     fxn1 = fs.f(xn1)
   incfn(o)
 
@@ -756,7 +758,7 @@ proc updateState*[T, S: SomeFloat](M: Thukral8|Order8, fs: proc(a: T): S, o: Uni
   let
     w = 1 / (S(1) - fzn / fwn)
     xi = (S(1) - 2 * fyn * fyn * fyn / (fwn * fwn * fxn))
-    xn1 = zn - w * xi * S(fzn / fp)
+    xn1 = zn - w * xi * T(fzn / fp)
     fxn1 = fs(xn1)
   incfn(o)
 
@@ -845,7 +847,7 @@ proc updateState*[T, S: SomeFloat, CF: CallableFunction[T, S]](M: Thukral16|Orde
   (fp1, issue) = fbracket(xn, yn, fxn, fyn)
   let
     sigma = 1.0 + u1 * u2 - u1 * u3 * u4^2 + u5 + u6 + u1^2 * u4 +
-            u2^1 * u3 + 3 * u1 * u4^2 * (u3^2 - u4^2) / S(fp1)
+            u2^2 * u3 + 3 * u1 * u4^2 * (u3^2 - u4^2) / S(fp1)
     xn1 = an - T(sigma * fan / fp)
     fxn1 = fs.f(xn1)
   incfn(o)
@@ -931,7 +933,7 @@ proc updateState*[T, S: SomeFloat](M: Thukral16|Order16, fs: proc(a: T): S, o: U
   (fp1, issue) = fbracket(xn, yn, fxn, fyn)
   let
     sigma = 1.0 + u1 * u2 - u1 * u3 * u4^2 + u5 + u6 + u1^2 * u4 +
-            u2^1 * u3 + 3 * u1 * u4^2 * (u3^2 - u4^2) / S(fp1)
+            u2^2 * u3 + 3 * u1 * u4^2 * (u3^2 - u4^2) / S(fp1)
     xn1 = an - T(sigma * fan / fp)
     fxn1 = fs(xn1)
   incfn(o)
@@ -950,10 +952,16 @@ proc steffStep*[T, S: SomeFloat](M: Order5|Order8|Order16, x: T, fx: S): T =
     (xbar, fxbar) = (x, fx)
   when sizeof(T) == 8:
     let
-      thresh = max(1.0, abs(xbar)) * sqrt(nextafter(1.0, Inf))
+      h1 = nextafter(1.0, 2.0) - 1.0
+      h2 = 1.0 - nextafter(1.0, 0.0)
+      # thresh = max(1.0, abs(xbar)) * sqrt(nextafter(1.0, Inf))
+      thresh = max(1.0, abs(xbar)) * sqrt(max(h1, h2))
   else:
     let
-      thresh = max(1.0, abs(xbar)) * sqrt(nextafterf(1.0, Inf))
+      h1 = nextafterf(1.0, 2.0) - 1.0
+      h2 = 1.0 - nextafterf(1.0, 0.0)
+      # thresh = max(1.0, abs(xbar)) * sqrt(nextafterf(1.0, Inf))
+      thresh = max(1.0, abs(xbar)) * sqrt(max(h1, h2))
 
   if abs(fxbar) <= thresh:
     return x + T(fxbar)
