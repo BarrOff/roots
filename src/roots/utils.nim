@@ -94,9 +94,11 @@ proc fbracket*[T: SomeFloat](a, b, fa, fb: T): (T, bool) =
   let
     num = fb - fa
     den = b - a
+    cnum = classify(num)
+    cden = classify(den)
 
-  if num == T(0.0) and den == T(0.0):
-    return (T(Inf), true)
+  if cnum == fcZero or cnum == fcNegZero or cden == fcZero or cden == fcNegZero:
+    return (Inf, true)
 
   return (num / den, isIssue(num / den))
 

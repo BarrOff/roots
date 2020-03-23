@@ -264,14 +264,14 @@ proc defaultTolerances*[Ti, Si: SomeFloat](M: Bisection | BisectionExact, T: typ
 proc middle[T: SomeNumber](x, y: T): T =
   var
     a, b: T
-  if abs(x) == Inf:
+  if classify(x) == fcInf or classify(x) == fcNegInf:
     when sizeof(T) == 8:
       a = nextafter(cdouble(x), cdouble(0.0))
     else:
       a = nextafterf(cfloat(x), cfloat(0.0))
   else:
     a = x
-  if y == Inf:
+  if classify(y) == fcInf or classify(y) == fcNegInf:
     when sizeof(T) == 8:
       b = nextafter(cdouble(y), cdouble(0.0))
     else:
@@ -356,7 +356,7 @@ proc assessConvergence*[T, S](M: BisectionExact, state: UnivariateZeroState[T, S
 
 
   for i in @[(x0, y0), (xm, ym), (x1, y1)]:
-    if i[1] == 0.0 or i[1] == S(NaN):
+    if classify(abs(i[1])) == fcZero or classify(i[1]) == fcNan:
       state.fConverged = true
       state.xConverged = true
       state.xstar = i[0]
@@ -620,7 +620,7 @@ proc newtonQuadratic[T, S: SomeFloat, R: SomeInteger](a, b, d: T, fa, fb, fd: S,
     r = a
 
   # use quadratic step; if that fails, use secant step; if that fails, bisection
-  if A != NaN or A == Inf or A != T(0.0):
+  if classify(A) == fcNormal:
     let
       B = fAB(a, b, fa, fb)
       dr = T(0.0)
@@ -821,17 +821,17 @@ proc defaultTolerances*(M: AbstractAlefeldPotraShi, T, S: typedesc): (T, T, S, S
   return (xatol, xrtol, atol, rtol, maxevals, maxfnevals, strict)
 
 proc checkZero*[T, S: SomeFloat, A: AbstractBracketing](M: A, state: UnivariateZeroState[T, S], c: T, fc: S): bool =
-  if c == NaN:
+  if classify(c) == fcNan:
     state.stopped = true
     state.xn1 = c
     state.message &= "NaN encountered. "
     return true
-  elif c == Inf:
+  elif classify(c) == fcInf or classify(c) == fcNegInf:
     state.stopped = true
     state.xn1 = c
     state.message &= "Inf encountered. "
     return true
-  elif fc == T(0):
+  elif classify(fc) == fcZero or classify(fc) == fcNegZero:
     state.stopped = true
     state.message &= "Exact zero found. "
     state.xstar = c
@@ -842,7 +842,7 @@ proc checkZero*[T, S: SomeFloat, A: AbstractBracketing](M: A, state: UnivariateZ
     
 proc assessConvergence*[T, S: SomeFloat, A: AbstractAlefeldPotraShi](M: A, state: UnivariateZeroState[T, S], options: UnivariateZeroOptions[T, T, S, S]): bool =
   if state.stopped or state.xConverged or state.fConverged:
-    if state.xstar == T(NaN):
+    if classify(state.xstar) == fcNan:
       (state.xstar, state.fxstar) = (state.xn1, state.fxn1)
     return true
 
@@ -1856,7 +1856,19 @@ proc findZero*[T, S: SomeFloat, AM: AbstractUnivariateZeroMethod, AN: AbstractBr
       break
     ## did we improve?
     if adj or abs(state0.fxn1) < abs(state.fxn1):
-      if state0.xn1 == NaN or state0.fxn1 == NaN or abs(state0.xn1) == Inf or abs(state0.fxn1) == Inf:
+      let
+        cx = classify(state0.xn1)
+        cfx = classify(state0.fxn1)
+      case cx
+      of fcNan, fcInf, fcNegInf:
+        break
+      else:
+        discard
+      case cfx
+      of fcNan, fcInf, fcNegInf:
+        break
+      else:
+        discard
         break
 
       copyState(state, state0)
@@ -1878,7 +1890,7 @@ proc findZero*[T, S: SomeFloat, AM: AbstractUnivariateZeroMethod, AN: AbstractBr
       quadCtr += 1
       r = quadVertex(state0.xn1, state0.fxn1, state.xn1, state.fxn1, state.xn0, state.fxn0)
 
-      if r == NaN or abs(r) == Inf:
+      if classify(r) == fcNan or classify(r) == fcInf or classify(r) == fcNegInf:
         copyState(state, state0)
       else:
 

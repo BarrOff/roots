@@ -389,18 +389,20 @@ proc assessConvergence*[T, S: SomeFloat](methodes: bool, state: UnivariateZeroSt
     xn0 = state.xn0
     xn1 = state.xn1
     fxn1 = state.fxn1
+    cxn1 = classify(xn1)
+    cfxn1 = classify(fxn1)
 
   if (state.xConverged or state.fConverged or state.stopped):
-    if state.xstar == T(NaN):
+    if classify(state.xstar) == fcNan:
       (state.xstar, state.fxstar) = (xn1, fxn1)
     return true
 
-  if xn1 == NaN or fxn1 == NaN:
+  if cxn1 == fcNan or cfxn1 == fcNan:
     state.convergenceFailed = true
     state.message &= "NaN produced by algorithm. "
     return true
 
-  if abs(xn1) == Inf or abs(fxn1) == Inf:
+  if cxn1 == fcInf or cxn1 == fcNegInf or cfxn1 == fcInf or cfxn1 == fcNegInf:
     state.convergenceFailed = true
     state.message &= "Inf produced by algorithm. "
     return true
@@ -519,7 +521,7 @@ proc findZero*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod, B: AbstractBrac
       if verbose:
         showTrace(methodes, N, state, l)
 
-    if xstar == NaN:
+    if classify(xstar) == fcNan:
       raise newException(ConvergenceError, "Stopped at: xn = " & $(state.xn1))
     else:
       return xstar
@@ -535,7 +537,7 @@ proc findZero*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod, B: AbstractBrac
       if verbose:
         showTrace(methodes, N, state, l)
 
-    if xstar == NaN:
+    if classify(xstar) == fcNan:
       raise newException(ConvergenceError, "Stopped at: xn = " & $(state.xn1))
     else:
       return xstar
@@ -567,7 +569,7 @@ proc findZero*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod, B: AbstractBrac
       if verbose:
         showTrace(methodes, N, state, l)
 
-    if xstar == NaN:
+    if classify(xstar) == fcNan:
       raise newException(ConvergenceError, "Stopped at: xn = " & $(state.xn1))
     else:
       return xstar
@@ -583,7 +585,7 @@ proc findZero*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod, B: AbstractBrac
       if verbose:
         showTrace(methodes, N, state, l)
 
-    if xstar == NaN:
+    if classify(xstar) == fcNan:
       raise newException(ConvergenceError, "Stopped at: xn = " & $(state.xn1))
     else:
       return xstar
@@ -612,7 +614,7 @@ proc findZero*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod, CF: CallableFun
       if verbose:
         showTrace(methodes, state, l)
 
-    if xstar == NaN:
+    if classify(xstar) == fcNan:
       raise newException(ConvergenceError, "Stopped at: xn = " & $(state.xn1))
     else:
       return xstar
@@ -625,7 +627,7 @@ proc findZero*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod, CF: CallableFun
       if verbose:
         showTrace(methodes, state, l)
 
-    if xstar == NaN:
+    if classify(xstar) == fcNan:
       raise newException(ConvergenceError, "Stopped at: xn = " & $(state.xn1))
     else:
       return xstar
@@ -654,7 +656,7 @@ proc findZero*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod](fs: proc(a: T):
       if verbose:
         showTrace(methodes, state, l)
 
-    if xstar == NaN:
+    if classify(xstar) == fcNan:
       raise newException(ConvergenceError, "Stopped at: xn = " & $(state.xn1))
     else:
       return xstar
@@ -667,7 +669,7 @@ proc findZero*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod](fs: proc(a: T):
       if verbose:
         showTrace(methodes, state, l)
 
-    if xstar == NaN:
+    if classify(xstar) == fcNan:
       raise newException(ConvergenceError, "Stopped at: xn = " & $(state.xn1))
     else:
       return xstar
