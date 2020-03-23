@@ -131,6 +131,7 @@ proc fbracketDiff*[T: SomeFloat](a, b, c, fa, fb, fc: T): (T, bool) =
   return (outer, isIssue(outer))
 
 proc fbracketRatio*[T: SomeFloat](a, b, c, fa, fb, fc: T): (T, bool) =
+  ## use f[a,b] * f[a,c] / f[b,c]
   let
     (x1, _) = fbracket(a, b, fa, fb)
     (x2, _) = fbracket(a, c, fa, fc)
