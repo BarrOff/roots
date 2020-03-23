@@ -41,17 +41,27 @@ proc sortSmallest*[T](a, b, fa, fb: T): (T, T, T, T) {.inline.} =
   return (b, a, fb, fa)
 
 
-proc defaultSecantStep*[T: SomeFloat](x1: T): T =
-  
-    let
-      h = when(sizeof(T) == 8):
-          pow(nextafter(1.0, Inf) - 1.0, 1/3)
-        else:
-          pow(nextafterf(1.0, Inf) - 1.0, 1/3)
-      dx = h + abs(x1) * h * h
-      x0 = x1 + dx
+proc defaultSecantStep*(x1: float): float =
 
-    return x0
+  let
+    h1 = nextafter(1.0, Inf) - 1.0
+    h2 = 1.0 - nextafter(1.0, 0.0)
+    h = pow(max(h1, h2), 1/3)
+    dx = h + abs(x1) * h * h
+    x0 = x1 + dx
+
+  return x0
+
+proc defaultSecantStep*(x1: float32): float32 =
+
+  let
+    h1 = nextafterf(1.0, Inf) - 1.0
+    h2 = 1.0 - nextafterf(1.0, 0.0)
+    h = pow(max(h1, h2), 1/3)
+    dx = h + abs(x1) * h * h
+    x0 = x1 + dx
+
+  return x0
 
 proc steffStep*[T: SomeFloat](x: T, fx: SomeFloat): T =           # NO M: Any!
   return x + T(fx)
