@@ -65,10 +65,6 @@ type
     fp*, fpp*: proc(a: T): S
   ConvergenceError* = object of ValueError
 
-# imports from C
-proc nextafterf*(a, b: cfloat): cfloat {.header: "<math.h>", importc: "nextafterf".}
-proc nextafter*(a, b: cdouble): cdouble {.header: "<math.h>", importc: "nextafter".}
-
 
 # forward declarations
 # proc findZero*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod, CF: CallableFunction[T, S]](M: A, F: CF, state: UnivariateZeroState[T, S], l: Tracks[T, S]|NullTracks = Nulltracks())

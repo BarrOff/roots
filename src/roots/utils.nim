@@ -1,5 +1,9 @@
 import math
 
+# imports from C
+proc nextafterf*(a, b: cfloat): cfloat {.header: "<math.h>", importc: "nextafterf".}
+proc nextafter*(a, b: cdouble): cdouble {.header: "<math.h>", importc: "nextafter".}
+
 type
   # type to throw on succesful convergence
   StateConverged* = ref object of RootObj
