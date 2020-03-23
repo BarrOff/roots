@@ -823,12 +823,14 @@ proc defaultTolerances*(M: AbstractAlefeldPotraShi, T, S: typedesc): (T, T, S, S
 proc checkZero*[T, S: SomeFloat, A: AbstractBracketing](M: A, state: UnivariateZeroState[T, S], c: T, fc: S): bool =
   if classify(c) == fcNan:
     state.stopped = true
-    state.xn1 = c
+    state.xstar = c
+    state.fxstar = fc
     state.message &= "NaN encountered. "
     return true
   elif classify(c) == fcInf or classify(c) == fcNegInf:
     state.stopped = true
-    state.xn1 = c
+    state.xstar = c
+    state.fxstar = fc
     state.message &= "Inf encountered. "
     return true
   elif classify(fc) == fcZero or classify(fc) == fcNegZero:
@@ -842,8 +844,8 @@ proc checkZero*[T, S: SomeFloat, A: AbstractBracketing](M: A, state: UnivariateZ
     
 proc assessConvergence*[T, S: SomeFloat, A: AbstractAlefeldPotraShi](M: A, state: UnivariateZeroState[T, S], options: UnivariateZeroOptions[T, T, S, S]): bool =
   if state.stopped or state.xConverged or state.fConverged:
-    if classify(state.xstar) == fcNan:
-      (state.xstar, state.fxstar) = (state.xn1, state.fxn1)
+    # if classify(state.xstar) == fcNan:
+    #   (state.xstar, state.fxstar) = (state.xn1, state.fxn1)
     return true
 
   if state.steps > options.maxevals:
@@ -859,7 +861,7 @@ proc assessConvergence*[T, S: SomeFloat, A: AbstractAlefeldPotraShi](M: A, state
   var
     (u, fu) = chooseSmallest(state.xn0, state.xn1, state.fxn0, state.fxn1)
 
-  (u, fu) = chooseSmallest(u, state.m[0], fu, state.fm[0])
+  # (u, fu) = chooseSmallest(u, state.m[0], fu, state.fm[0])
 
   if abs(fu) <= max(options.abstol, S(abs(u)) * options.reltol):
     state.fConverged = true
@@ -954,6 +956,9 @@ proc updateState[T, S: SomeFloat, CF: CallableFunction[T, S]](M: A42, f: CF, sta
     fcb = f.f(cb)
   incfn(state)
   if checkZero(M, state, cb, fcb):
+    # tighten up bracket
+    (state.xn0, state.xn1, state.m[0]) = (ab, bb, db)
+    (state.fxn0, state.fxn1, state.fm[0]) = (fab, fbb, fdb)
     return
 
   (ab, bb, db, fab, fbb, fdb) = bracket(ab, bb, cb, fab, fbb, fcb)
@@ -970,6 +975,9 @@ proc updateState[T, S: SomeFloat, CF: CallableFunction[T, S]](M: A42, f: CF, sta
     fch = f.f(cb)
   incfn(state)
   if checkZero(M, state, ch, fch):
+    # tighten up bracket
+    (state.xn0, state.xn1, state.m[0]) = (ab, bb, db)
+    (state.fxn0, state.fxn1, state.fm[0]) = (fab, fbb, fdb)
     return
 
   var
@@ -1042,6 +1050,9 @@ proc updateState[T, S: SomeFloat](M: A42, f: proc(a: T): S, state: UnivariateZer
     fcb = f(cb)
   incfn(state)
   if checkZero(M, state, cb, fcb):
+    # tighten up bracket
+    (state.xn0, state.xn1, state.m[0]) = (ab, bb, db)
+    (state.fxn0, state.fxn1, state.fm[0]) = (fab, fbb, fdb)
     return
 
   (ab, bb, db, fab, fbb, fdb) = bracket(ab, bb, cb, fab, fbb, fcb)
@@ -1058,6 +1069,9 @@ proc updateState[T, S: SomeFloat](M: A42, f: proc(a: T): S, state: UnivariateZer
     fch = f(cb)
   incfn(state)
   if checkZero(M, state, ch, fch):
+    # tighten up bracket
+    (state.xn0, state.xn1, state.m[0]) = (ab, bb, db)
+    (state.fxn0, state.fxn1, state.fm[0]) = (fab, fbb, fdb)
     return
 
   var
@@ -1123,6 +1137,9 @@ proc updateState[T, S: SomeFloat, CF: CallableFunction[T, S]](M: AlefeldPotraShi
   fc = f.f(c)
   incfn(state)
   if checkZero(M, state, c, fc):
+    # tighten up bracket
+    (state.xn0, state.xn1, state.m[0]) = (a, b, d)
+    (state.fxn0, state.fxn1, state.fm[0]) = (fa, fb, fd)
     return
 
   (a, b, d, fa, fb, fd) = bracket(a, b, c, fa, fb, fc)
@@ -1136,6 +1153,9 @@ proc updateState[T, S: SomeFloat, CF: CallableFunction[T, S]](M: AlefeldPotraShi
   fc = f.f(c)
   incfn(state)
   if checkZero(M, state, c, fc):
+    # tighten up bracket
+    (state.xn0, state.xn1, state.m[0]) = (a, b, d)
+    (state.fxn0, state.fxn1, state.fm[0]) = (fa, fb, fd)
     return
 
   let

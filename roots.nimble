@@ -1,6 +1,6 @@
 # Package
 
-version       = "0.2.0.1"
+version       = "0.2.1"
 author        = "Joachim Kruth"
 description   = "Root finding functions for Nim"
 license       = "MIT"
