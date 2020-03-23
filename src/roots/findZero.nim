@@ -450,7 +450,7 @@ proc showTrace*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod, B: AbstractBra
     if state.fConverged and state.message == "":
       echo "* stopped as |f(x_n)| ≤ max(δ, max(1,|x|)⋅ϵ) using δ = atol, ϵ = rtol"
     if state.message != "":
-      echo "* Note: ", "(state.message)"
+      echo "* Note: ", state.message
   else:
     echo "* Convergence failed: ", $(state.message)
     # echo "* Algorithm ", $(methodes)                                  # $(AbstractUnivariateZeroMethod) implementieren!
@@ -479,7 +479,7 @@ proc showTrace*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod](methodes: A, s
     if state.fConverged and state.message == "":
       echo "* stopped as |f(x_n)| ≤ max(δ, max(1,|x|)⋅ϵ) using δ = atol, ϵ = rtol"
     if state.message != "":
-      echo "* Note: ", "(state.message)"
+      echo "* Note: ", state.message
   else:
     echo "* Convergence failed: ", $(state.message)
     # echo "* Algorithm ", $(methodes)                                  # $(AbstractUnivariateZeroMethod) implementieren!
