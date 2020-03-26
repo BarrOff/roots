@@ -2,10 +2,6 @@
 # exports the main API in this file. Note that you cannot rename this file
 # but you can remove it if you wish.
 
-proc add*(x, y: int): int =
-  ## Adds two files together.
-  return x + y
-
 import roots/utils
 export utils
 import roots/findZero
@@ -14,3 +10,5 @@ import roots/bracketing
 export bracketing
 import roots/derivativeFree
 export derivativeFree
+import roots/simple
+export simple
