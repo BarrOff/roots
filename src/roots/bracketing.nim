@@ -129,7 +129,7 @@ proc initState*[T, S: SomeFloat, A: AbstractBisection](meth: A, fs: proc(a: T): 
   initState(result, meth, fs, (x0, x1), (fx0, fx1))
   return result
 
-proc initState*[T, S: SomeFloat, A: AbstractBisection, CF: CallableFunction[T, S]](state: UnivariateZeroState[T, S], M: A, fs: CF, xs: (T, S)) =
+proc initState*[T, S: SomeFloat, A: AbstractBisection, CF: CallableFunction[T, S]](state: UnivariateZeroState[T, S], M: A, fs: CF, xs: (T, T)) =
   ## creates function values `fxs` for `xs`, then uses `xs` and `fxs`
   ## to initialise the state reference.
   let
@@ -140,7 +140,7 @@ proc initState*[T, S: SomeFloat, A: AbstractBisection, CF: CallableFunction[T, S
   initState(state, M, fs, (x0, x1), (fx0, fx1))
   return
 
-proc initState*[T, S: SomeFloat, A: AbstractBisection](state: UnivariateZeroState[T, S], M: A, fs: proc(a: T): S, xs: (T, S)) =
+proc initState*[T, S: SomeFloat, A: AbstractBisection](state: UnivariateZeroState[T, S], M: A, fs: proc(a: T): S, xs: (T, T)) =
   ## creates function values `fxs` for `xs`, then uses `xs` and `fxs`
   ## to initialise the state reference.
   let
@@ -151,7 +151,7 @@ proc initState*[T, S: SomeFloat, A: AbstractBisection](state: UnivariateZeroStat
   initState(state, M, fs, (x0, x1), (fx0, fx1))
   return
 
-proc initState*[T, S: SomeFloat, A: AbstractBisection, CF: CallableFunction[T, S]](state: UnivariateZeroState[T, S], M: A, fs: CF, xs, fxs: (T, S)) =
+proc initState*[T, S: SomeFloat, A: AbstractBisection, CF: CallableFunction[T, S]](state: UnivariateZeroState[T, S], M: A, fs: CF, xs: (T, T), fxs: (S, S)) =
   var
     (x0, x1) = xs
     (fx0, fx1) = fxs
@@ -198,7 +198,7 @@ proc initState*[T, S: SomeFloat, A: AbstractBisection, CF: CallableFunction[T, S
   initState(state, x1, x0, @[m], fx1, fx0, @[fm])
   return
 
-proc initState*[T, S: SomeFloat, A: AbstractBisection](state: UnivariateZeroState[T, S], M: A, fs: proc(a: S): T, xs, fxs: (T, S)) =
+proc initState*[T, S: SomeFloat, A: AbstractBisection](state: UnivariateZeroState[T, S], M: A, fs: proc(a: S): T, xs: (T, T), fxs: (S, S)) =
   var
     (x0, x1) = xs
     (fx0, fx1) = fxs
@@ -419,7 +419,7 @@ proc updateState*[T, S: SomeFloat](M: Bisection | BisectionExact, fs: proc(a: T)
 
   return
 
-proc findZero*[T, S: SomeFloat, AT: Tracks[T, S] or NullTracks, CF: CallableFunction[T, S]](fs: CF, x0: (T, S), methods: Bisection, tracks: AT = NullTracks(), verbose = false, kwargs: varargs[UnivariateZeroOptions[T, T, S, S]]): float =
+proc findZero*[T, S: SomeFloat, AT: Tracks[T, S] or NullTracks, CF: CallableFunction[T, S]](fs: CF, x0: (T, T), methods: Bisection, tracks: AT = NullTracks(), verbose = false, kwargs: varargs[UnivariateZeroOptions[T, T, S, S]]): float =
   let
     x = adjustBracket(x0)
     F = callable_functions(fs)
@@ -470,7 +470,7 @@ proc findZero*[T, S: SomeFloat, AT: Tracks[T, S] or NullTracks, CF: CallableFunc
 
   return state.xstar
 
-proc findZero*[T, S: SomeFloat, AT: Tracks[T, S] or NullTracks](fs: proc (a: T): S, x0: (T, S), methods: Bisection, tracks: AT = NullTracks(), verbose = false, kwargs: varargs[UnivariateZeroOptions[T, T, S, S]]): float =
+proc findZero*[T, S: SomeFloat, AT: Tracks[T, S] or NullTracks](fs: proc (a: T): S, x0: (T, T), methods: Bisection, tracks: AT = NullTracks(), verbose = false, kwargs: varargs[UnivariateZeroOptions[T, T, S, S]]): float =
 
   let
     x = adjustBracket(x0)
@@ -642,7 +642,7 @@ proc newtonQuadratic[T, S: SomeFloat, R: SomeInteger](a, b, d: T, fa, fb, fd: S,
 
   return middle(a, b)
 
-proc initState*[T, S: SomeFloat, A: AbstractAlefeldPotraShi, CF: CallableFunction[T, S]](M: A, f: CF, xs: (T, S)): UnivariateZeroState[float, float] =
+proc initState*[T, S: SomeFloat, A: AbstractAlefeldPotraShi, CF: CallableFunction[T, S]](M: A, f: CF, xs: (T, T)): UnivariateZeroState[float, float] =
   var
     u = float(xs[0])
     v = float(xs[1])
@@ -680,7 +680,7 @@ proc initState*[T, S: SomeFloat, A: AbstractAlefeldPotraShi, CF: CallableFunctio
   initState(result, M, f, (u, v), false)
   return result
 
-proc initState*[T, S: SomeFloat, A: AbstractAlefeldPotraShi](M: A, f: proc(a: T): S, xs: (T, S)): UnivariateZeroState[float, float] =
+proc initState*[T, S: SomeFloat, A: AbstractAlefeldPotraShi](M: A, f: proc(a: T): S, xs: (T, T)): UnivariateZeroState[float, float] =
   var
     u = float(xs[0])
     v = float(xs[1])
