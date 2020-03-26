@@ -8,10 +8,10 @@ const
 
 # forward declarations
 
-proc middle[T: SomeNumber](x, y: T): T
-proc middle2[T: SomeInteger](a, b: T): float
-proc middle2(a, b: float): float
-proc middle2(a, b: float32): float32
+proc middle*[T: SomeNumber](x, y: T): T
+proc middle2*[T: SomeInteger](a, b: T): float
+proc middle2*(a, b: float): float
+proc middle2*(a, b: float32): float32
 proc ipzero[T, S: SomeFloat](a, b, c, d: T, fa, fb, fc, fd: S, delta: T = T(0.0)): T
 proc newtonQuadratic[T, S: SomeFloat, R: SomeInteger](a, b, d: T, fa, fb, fd: S, k: R, delta: T = T(0.0)): T
 proc galdinoReduction(methods: FalsePosition, fa, fb, fx: float): float {.inline.}
@@ -24,7 +24,7 @@ proc logStep*[T, S: SomeFloat, A: AbstractBisection](l: Tracks[T, S], M: A, stat
   add(l.xs, state.xn0)
   add(l.xs, state.xn1)
 
-proc adjustBracket[T: SomeFloat](x0: (T, T)): (T, T) =
+proc adjustBracket*[T: SomeFloat](x0: (T, T)): (T, T) =
   ## takes care that both bracketing values are finite
   ## and returns a sorted tuple
   var
@@ -261,7 +261,7 @@ proc defaultTolerances*[Ti, Si: SomeFloat](M: Bisection | BisectionExact, T: typ
 
   return((xatol, xrtol, atol, rtol, maxevals, maxfnevals, strict))
 
-proc middle[T: SomeNumber](x, y: T): T =
+proc middle*[T: SomeNumber](x, y: T): T =
   var
     a, b: T
   if classify(x) == fcInf or classify(x) == fcNegInf:
@@ -284,10 +284,10 @@ proc middle[T: SomeNumber](x, y: T): T =
   else:
     return middle2(a, b)
 
-proc middle2[T: SomeInteger](a, b: T): float =
+proc middle2*[T: SomeInteger](a, b: T): float =
   return 0.5 * float(a) + 0.5 * float(b)
 
-proc middle2[T: float32, S: uint32](t: typedesc[T], s: typedesc[S], a, b: T): T =
+proc middle2*[T: float32, S: uint32](t: typedesc[T], s: typedesc[S], a, b: T): T =
   let
     aInt = cast[S](a)
     bInt = cast[S](b)
@@ -295,7 +295,7 @@ proc middle2[T: float32, S: uint32](t: typedesc[T], s: typedesc[S], a, b: T): T 
 
   return T(sgn(a + b)) * cast[T](mid)
 
-proc middle2[T: float, S: uint](t: typedesc[T], s: typedesc[S], a, b: T): T =
+proc middle2*[T: float, S: uint](t: typedesc[T], s: typedesc[S], a, b: T): T =
   let
     aInt = cast[S](a)
     bInt = cast[S](b)
@@ -303,10 +303,10 @@ proc middle2[T: float, S: uint](t: typedesc[T], s: typedesc[S], a, b: T): T =
 
   return T(sgn(a + b)) * cast[T](mid)
 
-proc middle2(a, b: float): float =
+proc middle2*(a, b: float): float =
   return middle2(float, uint, a, b)
 
-proc middle2(a, b: float32): float32 =
+proc middle2*(a, b: float32): float32 =
   return middle2(float32, uint32, a, b)
 
 proc assessConvergence*[T, S: SomeFloat](M: Bisection, state: UnivariateZeroState[T, S], options: UnivariateZeroOptions[T, T, S, S]): bool =
