@@ -578,9 +578,6 @@ proc bracket[T, S: SomeFloat](a, b, c: T, fa, fb, fc: S): (T, T, T, S, S, S) =
     return (c, b, a, fc, fb, fa)
 
 proc takeA42Step[T, S: SomeFloat](a, b, d, ee: T, fa, fb, fd, fe: S, delta: T = T(0.0)): T =
-  let
-    fs = (fa, fb, fd, fe)
-
   var
     r = ipzero(a, b, d, ee, fa, fb, fd, fe, delta)
 
@@ -623,7 +620,6 @@ proc newtonQuadratic[T, S: SomeFloat, R: SomeInteger](a, b, d: T, fa, fb, fd: S,
   if classify(A) == fcNormal:
     let
       B = fAB(a, b, fa, fb)
-      dr = T(0.0)
 
     for i in 1..k:
       let
@@ -1113,11 +1109,9 @@ proc updateState[T, S: SomeFloat, CF: CallableFunction[T, S]](M: AlefeldPotraShi
     a = state.xn0
     b = state.xn1
     d = state.m[0]
-    ee = state.m[1]
     fa = state.fxn0
     fb = state.fxn1
     fd = state.fm[0]
-    fe = state.fm[1]
 
   let
     mu = 0.5
@@ -1190,11 +1184,9 @@ proc updateState[T, S: SomeFloat](M: AlefeldPotraShi, f: proc(a: T): S, state: U
     a = state.xn0
     b = state.xn1
     d = state.m[0]
-    ee = state.m[1]
     fa = state.fxn0
     fb = state.fxn1
     fd = state.fm[0]
-    fe = state.fm[1]
 
   let
     mu = 0.5

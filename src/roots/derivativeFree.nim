@@ -404,8 +404,7 @@ proc updateState*[T, S: SomeFloat](methodes: Order2B, fs: proc(a: T): S, o: Univ
 
 proc updateState*[T, S: SomeFloat, CF: CallableFunction[T, S]](methodes: Esser, fs: CF, o: UnivariateZeroState[T, S], options: UnivariateZeroOptions[T, T, S, S]) =
   let
-    (x0, x1) = (o.xn0, o.xn1)
-    (fx0, fx1) = (o.fxn0, o.fxn1)
+    (x1, fx1) = (o.xn1, o.fxn1)
 
     f0 = fx1
     f1 = fs.f(x1 + T(f0))
@@ -444,8 +443,7 @@ proc updateState*[T, S: SomeFloat, CF: CallableFunction[T, S]](methodes: Esser, 
 
 proc updateState*[T, S: SomeFloat](methodes: Esser, fs: proc(a: T): S, o: UnivariateZeroState[T, S], options: UnivariateZeroOptions[T, T, S, S]) =
   let
-    (x0, x1) = (o.xn0, o.xn1)
-    (fx0, fx1) = (o.fxn0, o.fxn1)
+    (x1, fx1) = (o.xn1, o.fxn1)
 
     f0 = fx1
     f1 = fs(S(x1) + f0)
