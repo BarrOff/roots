@@ -467,7 +467,7 @@ proc showTrace*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod](methodes: A, s
 
   if converged:
     echo "* Converged to: ", state.xn1
-    if methodes of AbstractBracketing:
+    when A is AbstractBracketing:
       echo "* Algorithm: "#, $(methodes)
     else:
       echo "* Algorithm: ", " with possible bracketing with "#, $(N) #$(methodes),
@@ -512,7 +512,7 @@ proc findZero*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod, B: AbstractBrac
     var
       l: Tracks[T, S]
     new(l)
-    if methodes of AbstractBracketing:
+    when A is AbstractBracketing:
       xstar = findZero(methodes, F, options, state, l)
     else:
       xstar = findZero(methodes, N, F, options, state, l)
@@ -528,7 +528,7 @@ proc findZero*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod, B: AbstractBrac
   else:
     let
       l = tracks
-    if methodes of AbstractBracketing:
+    when A is AbstractBracketing:
       xstar = findZero(methodes, F, options, state, l)
     else:
       xstar = findZero(methodes, N, F, options, state, l)
@@ -560,7 +560,7 @@ proc findZero*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod, B: AbstractBrac
     var
       l: Tracks[T, S]
     new(l)
-    if methodes of AbstractBracketing:
+    when A is AbstractBracketing:
         xstar = findZero(methodes, F, options, state, l)
     else:
         xstar = findZero(methodes, N, F, options, state, l)
@@ -576,7 +576,7 @@ proc findZero*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod, B: AbstractBrac
   else:
     let
       l = tracks
-    if methodes of AbstractBracketing:
+    when A is AbstractBracketing:
         xstar = findZero(methodes, F, options, state, l)
     else:
         xstar = findZero(methodes, N, F, options, state, l)
