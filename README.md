@@ -46,6 +46,8 @@ Currently implemented methods are:
 
 ### Usage
 
+**The methods from simple.nim are used in a different way than those of bisection.nim and derivativeFree.nim. If you want to use them, please take a look at the code or the documentation in Roots.jl. Examples will be included here in the future.**
+
 Similar to the Roots.jl way specifying the algorithm is optional. If none is given, Bisection is used.
 The chosen algorithm can be passed as the third parameter to the `findZero` function call.
 Some examples:
