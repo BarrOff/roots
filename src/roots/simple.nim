@@ -390,8 +390,8 @@ proc dfree*[T, S: SomeFloat](f: proc(a: T): S, xs: T|(T, T)): T =
     a, b: T
     fa, fb: S
 
-  if typeof(xs) == T:
-    a = xs[0]
+  when typeof(xs) is T:
+    a = xs
     fa = f(a)
 
     when sizeof(T) == 8:
@@ -415,7 +415,7 @@ proc dfree*[T, S: SomeFloat](f: proc(a: T): S, xs: T|(T, T)): T =
     MAXCNT: int
 
   when sizeof(T) == 8:
-    MAXCNT = 5 * ceil(-log(max(nextafter(1.0, Inf) - 1.0, 1.0 - nextafter(1.0, 0.0))))
+    MAXCNT = 5 * int(ceil(-log(max(nextafter(1.0, Inf) - 1.0, 1.0 - nextafter(1.0, 0.0)), exp(1.0))))
 
   if abs(fa) > abs(fb):
     (a, fa, b, fb) = (b, fb, a, fa)
@@ -440,7 +440,7 @@ proc dfree*[T, S: SomeFloat](f: proc(a: T): S, xs: T|(T, T)): T =
     elif abs(gamma - b) >= 100 * abs(b - a):
       gamma = b + T(sgn(gamma - b)) * 100 * abs(b - a) # too big
 
-    let
+    var
       fgamma = f(gamma)
 
     # change sign
@@ -479,7 +479,7 @@ proc dfree*[T, S: SomeFloat](f: proc(a: T): S, xs: T|(T, T)): T =
         return b
       if sgn(fb) * sgn(fbnext) < 0:
         return b
-      for i in ((b, fb), (bprev, fbprev), (bnext, fbnext)):
+      for i in @[ (b, fb), (bprev, fbprev), (bnext, fbnext) ]:
         when sizeof(T) == 8:
           if abs(i[1]) <= 8 * max(nextafter(1.0, Inf) - 1.0, 1.0 - nextafter(1.0, 0.0)):
             return i[0]
