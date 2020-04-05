@@ -1,4 +1,5 @@
 import math, sequtils
+import utils
 
 type
   # Methods
@@ -492,7 +493,7 @@ proc showTrace*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod](methodes: A, s
 
 # find_zero(fs, x0, method; kwargs...)
 
-from bracketing import findZero
+# from bracketing import findZero
 
 # Interface to one of several methods for find zeros of a univariate function.
 proc findZero*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod, B: AbstractBracketing, CF: CallableFunction[T, S]](fs: CF, x0: T|(T, T), methodes: A, N: B, tracks: Tracks[T, S]|NullTracks = NullTracks(), verbose = false, kwargs: varargs[UnivariateZeroOptions[T, T, S, S]]): T =
