@@ -1,5 +1,5 @@
 import math, tables
-import utils, findZero
+import private/utils, findZero
 
 const
   bracketing_error = """The interval [a,b] is not a bracketing interval.

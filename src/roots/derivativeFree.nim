@@ -1,5 +1,5 @@
 import math
-import utils, findZero
+import private/utils, findZero
 
 type
   Order0* = object of AbstractSecant

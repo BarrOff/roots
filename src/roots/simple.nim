@@ -1,14 +1,18 @@
 import math
-import utils, findZero, bracketing
+import private/utils, findZero, bracketing
 
 type
   TupleWrapper[T, S: SomeFloat] = object of RootObj
     f, fp: proc(a: T): S
 
+let
+  eps = 8 * max(nextafter(1.0, Inf) - 1.0, 1.0 - nextafter(1.0, 0.0))
+  eps32 = 8 * max(nextafterf(1.0, Inf) - 1.0, 1.0 - nextafterf(1.0, 0.0))
+
 # forward declarations
 proc hasConverged*[S: SomeFloat](Val: bool, x1, x2, m: float, ym: S, atol, rtol: float): bool
-proc secant*[T, S: SomeFloat](f: proc(x: T): S, a, b: T, atol: T = 0.0, rtol: T = 1e-8, maxevals = 100): T
-proc secant*[T, S: SomeFloat, CF: CallableFunction[T, S]](f: CF, a, b: T, atol: T = 0.0, rtol: T = 1e-8, maxevals = 100): T
+proc secant*[T, S: SomeFloat](f: proc(x: T): S, a, b: T, atol: T = 0.0, rtol: T = NaN, maxevals = 100): T
+proc secant*[T, S: SomeFloat, CF: CallableFunction[T, S]](f: CF, a, b: T, atol: T = 0.0, rtol: T = NaN, maxevals = 100): T
 
 
 proc bisection*[T, S: SomeFloat, CF: CallableFunction[float, S]](f: CF, a, b: T, xatol: float = 0.0, xrtol: float = 0.0): float =

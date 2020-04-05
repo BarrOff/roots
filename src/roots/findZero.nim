@@ -1,5 +1,5 @@
 import math, sequtils
-import utils
+import private/utils
 
 type
   # Methods
