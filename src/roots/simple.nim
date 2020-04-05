@@ -178,7 +178,7 @@ proc secantMethod*[T, S: SomeFloat](f: proc(x: T): S, xs: T|(T, T), atol: float 
 
   return secant(f, a, b, atol, rtol, maxevals)
 
-proc secant*[T, S: SomeFloat, CF: CallableFunction[T, S]](f: CF, a, b: T, atol: T = 0.0, rtol: T = 1e-8, maxevals = 100): T =
+proc secant*[T, S: SomeFloat, CF: CallableFunction[T, S]](f: CF, a, b: T, atol: T = 0.0, rtol: T = NaN, maxevals = 100): T =
   let
     nan = (0 * a) / (0 * a)
   var
@@ -187,6 +187,7 @@ proc secant*[T, S: SomeFloat, CF: CallableFunction[T, S]](f: CF, a, b: T, atol: 
     b1 = b
     fa = f.f(a)
     fb = f.f(b)
+    rtol = rtol
 
   if fb == fa:
     return nan
@@ -195,10 +196,16 @@ proc secant*[T, S: SomeFloat, CF: CallableFunction[T, S]](f: CF, a, b: T, atol: 
     uatol = atol
     adjustunit = 1.0
 
+  when sizeof(T) == 8:
+    if classify(rtol) == fcNan:
+      rtol = eps
+  else:
+    if classify(rtol) == fcNan:
+      rtol = eps32
+
   while cnt < maxevals:
     let
       m = b1 - (b1 - a1) * fb / (fb - fa)
-    var
       fm = f.f(m)
       cfm = classify(fm)
 
@@ -227,7 +234,7 @@ proc secant*[T, S: SomeFloat, CF: CallableFunction[T, S]](f: CF, a, b: T, atol: 
 
   return nan
 
-proc secant*[T, S: SomeFloat](f: proc(x: T): S, a, b: T, atol: T = 0.0, rtol: T = 1e-8, maxevals = 100): T =
+proc secant*[T, S: SomeFloat](f: proc(x: T): S, a, b: T, atol: T = 0.0, rtol: T = NaN, maxevals = 100): T =
   let
     nan = (0 * a) / (0 * a)
   var
@@ -236,6 +243,7 @@ proc secant*[T, S: SomeFloat](f: proc(x: T): S, a, b: T, atol: T = 0.0, rtol: T 
     b1 = b
     fa = f(a)
     fb = f(b)
+    rtol = rtol
 
   if fb == fa:
     return nan
@@ -244,10 +252,16 @@ proc secant*[T, S: SomeFloat](f: proc(x: T): S, a, b: T, atol: T = 0.0, rtol: T 
     uatol = atol
     adjustunit = 1.0
 
+  when sizeof(T) == 8:
+    if classify(rtol) == fcNan:
+      rtol = eps
+  else:
+    if classify(rtol) == fcNan:
+      rtol = eps32
+
   while cnt < maxevals:
     let
       m = b1 - (b1 - a1) * fb / (fb - fa)
-    var
       fm = f(m)
       cfm = classify(fm)
 
