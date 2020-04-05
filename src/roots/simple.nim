@@ -27,7 +27,7 @@ proc bisection*[T, S: SomeFloat, CF: CallableFunction[float, S]](f: CF, a, b: T,
   var
     CT: bool
 
-  if (catol == fcZero or catol ==fcNegZero) and (crtol == fcZero or crtol == fcNegZero):
+  if (catol == fcZero or catol == fcNegZero) and (crtol == fcZero or crtol == fcNegZero):
     CT = true
   else:
     CT = false
@@ -71,7 +71,7 @@ proc bisection*[T, S: SomeFloat](f: proc(x: float): S, a, b: T, xatol: float = 0
   var
     CT: bool
 
-  if (catol == fcZero or catol ==fcNegZero) and (crtol == fcZero or crtol == fcNegZero):
+  if (catol == fcZero or catol == fcNegZero) and (crtol == fcZero or crtol == fcNegZero):
     CT = true
   else:
     CT = false
