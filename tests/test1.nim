@@ -50,6 +50,13 @@ suite "float: bracketing Tests":
     check(z == 8.613169456441399)
     check(z1 == 0.8282194527125695)
 
+  test "default settings for Brent":
+    let
+      z = findZero(f, (8.0, 9.0), Brent())
+      z1 = findZero(f1, (-0.5, 2.0), Brent())
+    check(z == 8.613169456441399)
+    check(z1 == 0.8282194531967022)
+
   test "default settings for FalsePosition":
     let
       z = findZero(f, (8.0, 9.0), FalsePosition(g: 12))
@@ -87,6 +94,11 @@ suite "int: bracketing Tests":
   test "default settings for BisectionExact":
     let
       z = findZero(f, (8, 9), BisectionExact())
+    check(z == 8.613169456441399)
+
+  test "default settings for Brent":
+    let
+      z = findZero(f, (8, 9), Brent())
     check(z == 8.613169456441399)
 
   test "default settings for FalsePosition":
@@ -141,9 +153,13 @@ suite "kwargs Tests":
       z = findZero(f, (8.0, 9.0), BisectionExact(), kwargs = kw)
     check(z == 8.613169456441399)
 
-  test "kwargs with FalsePosition":
+  test "kwargs with Brent":
+    initOptions2(kw, Brent())
     let
-      kw = UnivariateZeroOptions[float, float, float, float]()
+      z = findZero(f, (8.0, 9.0), Brent(), kwargs = kw)
+    check(z == 8.613169456441399)
+
+  test "kwargs with FalsePosition":
     initOptions2(kw, FalsePosition(g: 12))
     let
       z = findZero(f, (8.0, 9.0), FalsePosition(g: 12), kwargs = kw)
