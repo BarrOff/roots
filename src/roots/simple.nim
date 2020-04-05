@@ -124,7 +124,7 @@ proc hasConverged[S: SomeFloat](Val: bool, x1, x2, m: float, ym: S, atol, rtol: 
 
 # secantMethod
 
-proc secantMethod*[T, S: SomeFloat, CF: CallableFunction[T, S]](f: CF, xs: T|(T, T), atol: float = 0.0, rtol: float = 1e-8, maxevals = 100): T =
+proc secantMethod*[T, S: SomeFloat, CF: CallableFunction[T, S]](f: CF, xs: T|(T, T), atol: float = 0.0, rtol: float = NaN, maxevals = 100): T =
   var
     a, b, h: T
 
@@ -141,10 +141,17 @@ proc secantMethod*[T, S: SomeFloat, CF: CallableFunction[T, S]](f: CF, xs: T|(T,
   else:
     a = xs[0]
     b = xs[1]
+
+  when sizeof(T) == 8:
+    if classify(rtol) == fcNan:
+      return secant(f, a, b, atol, eps, maxevals)
+  else:
+    if classify(rtol) == fcNan:
+      return secant(f, a, b, atol, eps32, maxevals)
 
   return secant(f, a, b, atol, rtol, maxevals)
 
-proc secantMethod*[T, S: SomeFloat](f: proc(x: T): S, xs: T|(T, T), atol: float = 0.0, rtol: float = 1e-8, maxevals = 100): T =
+proc secantMethod*[T, S: SomeFloat](f: proc(x: T): S, xs: T|(T, T), atol: float = 0.0, rtol: float = NaN, maxevals = 100): T =
   var
     a, b, h: T
 
@@ -161,6 +168,13 @@ proc secantMethod*[T, S: SomeFloat](f: proc(x: T): S, xs: T|(T, T), atol: float 
   else:
     a = xs[0]
     b = xs[1]
+
+  when sizeof(T) == 8:
+    if classify(rtol) == fcNan:
+      return secant(f, a, b, atol, eps, maxevals)
+  else:
+    if classify(rtol) == fcNan:
+      return secant(f, a, b, atol, eps32, maxevals)
 
   return secant(f, a, b, atol, rtol, maxevals)
 
