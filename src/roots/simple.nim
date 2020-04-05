@@ -294,7 +294,7 @@ proc secant*[T, S: SomeFloat](f: proc(x: T): S, a, b: T, atol: T = 0.0, rtol: T 
 
 # newton
 
-proc newton*[T, S: SomeFloat](f: (proc(a: T): S, proc(a: T): S), x0: T, xatol: T = NaN, xrtol: T = NaN, maxevals = 100): T =
+proc newton*[T, S: SomeFloat](f0, f1: proc(a: T): S, x0: T, xatol: T = NaN, xrtol: T = NaN, maxevals = 100): T =
   var
     x = x0
     atol, rtol: T
@@ -322,8 +322,8 @@ proc newton*[T, S: SomeFloat](f: (proc(a: T): S, proc(a: T): S), x0: T, xatol: T
     xo = Inf
   for i in 1..maxevals:
     let
-      fx = f[0](x)
-      deltaX = fx / f[1](x)
+      fx = f0(x)
+      deltaX = fx / f1(x)
 
     if classify(fx) == fcZero or classify(fx) == fcNegZero:
       return x
