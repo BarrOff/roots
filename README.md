@@ -11,16 +11,36 @@ This is a root finding library for [Nim](https://nim-lang.org). It is highly inf
 The basic structure was taken from Roots.jl and reimplemented as close a possible in Nim. All honor goes to them, I merely took their code and converted it to Nim.
 As both languages handle things differently, some changes were unavoidable. An example is passing objects to functions: in Julia it is call-by-reference, whereas in Nim it is usually call-by-value. To accomodate for this, most types are ref types. Duplication of state, option and track objects it thereby avoided. To substitute for Julias [multiple dispatch](https://en.wikipedia.org/wiki/Multiple_dispatch) capabilities Generics are used.
 
-From my limited testing it seems, that the following algorithms work:
+Currently implemented methods are:
 
-| Algorithm        | Status            |
-|------------------|-------------------|
-|Bisection         | working           |
-|BisectionExact    | working           |
-|A42               | working           |
-|AlefeldPotraShi   | working           |
-|Brent             | working           | 
-|FalsePosition     | working           |
+- bisection.nim:
+	- A42
+	- AlefeldPotraShi
+	- Bisection
+	- BisectionExact
+	- Brent
+	- FalsePosition
+- derivativeFree.nim:
+	- Order1
+	- Secant
+	- Order1B
+	- King
+	- Order2
+	- Steffensen
+	- Order2B
+	- Esser
+	- Order5
+	- Order8
+	- Thukral8
+	- Order16
+	- Thukral16
+- simple.nim:
+	- bracketing
+	- secantMethod
+	- newton
+	- dfree
+
+
 
 
 
@@ -70,7 +90,7 @@ options.strict = false
 echo findZero(f, (8, 9), FalsePosition(g: 12), verbose = true, options)
 ```
 
-**The library can not handle arrays as input. The function may not use integers in its' domain or codomain.**
+**At this point, the library can not handle arrays as input. The function may not use integers in its' domain or codomain.**
 
 ## To-do
 
@@ -78,8 +98,8 @@ echo findZero(f, (8, 9), FalsePosition(g: 12), verbose = true, options)
 - [x] implement basic bisection algorithm and [AlefeldPotraShi](https://dx.doi.org/10.1090/s0025-5718-1993-1192965-2)
 - [x] implement all Bracketing algorithms
 - [ ] add tests
-- [ ] implement non-bracketing methods
+- [x] implement non-bracketing methods
 - [ ] clean up code and possibly restructure
 - [ ] add documentation
 - [ ] make code more type generic (possibly handling arrays as parameters)
-- [ ] don't export everythink, use sane encapsulation
+- [ ] don't export everything, use sane encapsulation
