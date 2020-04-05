@@ -128,8 +128,8 @@ proc secantMethod*[T, S: SomeFloat, CF: CallableFunction[T, S]](f: CF, xs: T|(T,
   var
     a, b, h: T
 
-  if typeof(xs) == T:
-    a = xs[0]
+  when typeof(xs) is T:
+    a = xs
     
     when sizeof(T) == 8:
       h = max(nextafter(1.0, Inf) - 1.0, 1.0 - nextafter(1.0, 0.0))
@@ -148,8 +148,8 @@ proc secantMethod*[T, S: SomeFloat](f: proc(x: T): S, xs: T|(T, T), atol: float 
   var
     a, b, h: T
 
-  if typeof(xs) == T:
-    a = xs[0]
+  when typeof(xs) is T:
+    a = xs
     
     when sizeof(T) == 8:
       h = max(nextafter(1.0, Inf) - 1.0, 1.0 - nextafter(1.0, 0.0))
