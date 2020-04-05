@@ -246,3 +246,42 @@ suite "float: derivativeFree Tests":
       z1 = findZero(f1, 0.0, Thukral16())
     check(z == 8.632072307059465)
     check(z1 == 0.8282194527125695)
+
+suite "float: simple Tests":
+  setup:
+    proc f(x: float): float =
+      return exp(x) - x^4
+    proc f1(x: float): float =
+      return sinh(x - 2.0) + x^2 - 4.5 * x + 4.5
+
+  test "default settings for bisection":
+    let
+      z = bisection(f, 8.0, 9.0)
+      z1 = bisection(f1, 0.0, 1.0)
+    check(z == 8.613169456441398)
+    check(z1 == 0.8282194527125698)
+
+  test "default settings for secantMethod":
+    let
+      z = secantMethod(f, (8.0, 9.0))
+      z1 = secantMethod(f1, (0.0, 1.0))
+    check(z == 8.613169456441398)
+    check(z1 == 0.8282194527125698)
+
+  test "default settings for newton":
+    proc fd(x: float) : float =
+      return exp(x) - 4 * x^3
+    proc f1d(x: float): float =
+      return cosh(x - 2) + 2 * x - 4.5
+    let
+      z = newton(f, fd, 8.0)
+      z1 = newton(f1, f1d, 0.0)
+    check(z == 8.613169456441398)
+    check(z1 == 0.8282194527125706)
+
+  test "default settings for dfree":
+    let
+      z = dfree(f, 8.0)
+      z1 = dfree(f1, 0.0)
+    check(z == 8.613169456441398)
+    check(z1 == 0.8282194527125691)
