@@ -292,6 +292,77 @@ proc secant*[T, S: SomeFloat](f: proc(x: T): S, a, b: T, atol: T = 0.0, rtol: T 
 
 
 
+# muller
+
+proc muller*[T, S: SomeFloat](f: proc(a: T): S, oldest, older, old: T,
+    xatol: T = NaN, xrtol: T = NaN, maxevals: int = 300): T =
+  var
+    (xI2, xI1, xI) = (oldest, older, old)
+    atol, rtol: T
+
+  when sizeof(T) == 8:
+    if classify(xatol) != fcNan:
+      atol = xatol
+    else:
+      atol = pow(max(nextafter(1.0, Inf) - 1.0, 1.0 - nextafter(1.0, 0.0)), 4 / 5)
+    if classify(xrtol) != fcNan:
+      rtol = xrtol
+    else:
+      rtol = pow(max(nextafter(1.0, Inf) - 1.0, 1.0 - nextafter(1.0, 0.0)), 4 / 5)
+  else:
+    if classify(xatol) != fcNan:
+      atol = xatol
+    else:
+      atol = pow(max(nextafterf(1.0, Inf) - 1.0, 1.0 - nextafterf(1.0, 0.0)),
+          4 / 5)
+    if classify(xrtol) != fcNan:
+      rtol = xrtol
+    else:
+      rtol = pow(max(nextafterf(1.0, Inf) - 1.0, 1.0 - nextafterf(1.0, 0.0)),
+          4 / 5)
+
+
+  for i in 1..maxevals div 3:
+    # three evaluations per iteration
+    var
+      x = muller_step(xI2, xI1, xI, f(xI2), f(xI1), f(xI))
+
+    if classify(x) == fcNan:
+      echo "The algorithm might not have converged, stopping at i=", i, abs(xI - xI1)
+      return xI
+
+    (xI2, xI1, xI) = (xI1, xI, x)
+    # stopping criterion
+    if isFApprox0(xI, xI1, atol = atol, rtol = rtol):
+      return xI
+
+  return xI
+
+proc muller_step*[T, S: SomeFloat](a, b, c: T, fa, fb, fc: S): T =
+  let
+    q = (c - b) / (b - a)
+    q2 = q * q
+    q1 = q + T(1)
+
+    A = q * fc - q * q1 * fb + q2 * fa
+    B = (q1 + q) * fc - q1 * q1 * fb + q2 * fa
+    C = q1 * fc
+
+    delta = B * B - 4 * A * C
+  if delta < 0:
+    raise newException(RangeError, "Discriminant is negative and the function most likely has complex roots. You might want to call muller with complex input.")
+  delta = sqrt(delta)
+
+  let
+    dplus = B + delta
+    dminus = B - delta
+    den = if abs(dplus) > abs(dminus):
+            dplus
+          else:
+            dminus
+
+  return T(c - (c - b) * 2 * C / den)
+
 # newton
 
 proc newton*[T, S: SomeFloat](f0, f1: proc(a: T): S, x0: T, xatol: T = NaN, xrtol: T = NaN, maxevals = 100): T =
