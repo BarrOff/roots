@@ -19,45 +19,62 @@ type
   Thukral16* = object of AbstractSecant
 
 # forward declarations
-proc updateState*[T, S: SomeFloat, CF: CallableFunction[T, S]](methodes: Order1, fs: CF, o: UnivariateZeroState[T, S], options: UnivariateZeroOptions[T, T, S, S])
-proc updateState*[T, S: SomeFloat](methodes: Order1, fs: proc(a: T): S, o: UnivariateZeroState[T, S], options: UnivariateZeroOptions[T, T, S, S])
-proc updateState*[T, S: SomeFloat, CF: CallableFunction[T, S]](methodes: Order1B, fs: CF, o: UnivariateZeroState[T, S], options: UnivariateZeroOptions[T, T, S, S])
-proc updateState*[T, S: SomeFloat](methodes: Order1B, fs: proc(a: T): S, o: UnivariateZeroState[T, S], options: UnivariateZeroOptions[T, T, S, S])
-proc updateState*[T, S: SomeFloat, CF: CallableFunction[T, S]](methodes: King, fs: CF, o: UnivariateZeroState[T, S], options: UnivariateZeroOptions[T, T, S, S])
-proc updateState*[T, S: SomeFloat](methodes: King, fs: proc(a: T): S, o: UnivariateZeroState[T, S], options: UnivariateZeroOptions[T, T, S, S])
+proc updateState*[T, S: SomeFloat, CF: CallableFunction[T, S]](methodes: Order1,
+    fs: CF, o: UnivariateZeroState[T, S], options: UnivariateZeroOptions[T, T, S, S])
+proc updateState*[T, S: SomeFloat](methodes: Order1, fs: proc(a: T): S,
+    o: UnivariateZeroState[T, S], options: UnivariateZeroOptions[T, T, S, S])
+proc updateState*[T, S: SomeFloat, CF: CallableFunction[T, S]](
+  methodes: Order1B, fs: CF, o: UnivariateZeroState[T, S],
+    options: UnivariateZeroOptions[T, T, S, S])
+proc updateState*[T, S: SomeFloat](methodes: Order1B, fs: proc(a: T): S,
+    o: UnivariateZeroState[T, S], options: UnivariateZeroOptions[T, T, S, S])
+proc updateState*[T, S: SomeFloat, CF: CallableFunction[T, S]](methodes: King,
+    fs: CF, o: UnivariateZeroState[T, S], options: UnivariateZeroOptions[T, T, S, S])
+proc updateState*[T, S: SomeFloat](methodes: King, fs: proc(a: T): S,
+    o: UnivariateZeroState[T, S], options: UnivariateZeroOptions[T, T, S, S])
 proc steffStep*[T, S: SomeFloat](M: Order5|Order8|Order16, x: T, fx: S): T
 
-proc doGuardedStep[T, S: SomeFloat](M: AbstractSecant, o: UnivariateZeroState[T, S]): bool {.inline.} =
+proc doGuardedStep[T, S: SomeFloat](M: AbstractSecant, o: UnivariateZeroState[T,
+    S]): bool {.inline.} =
   let
     (x, fx) = (o.xn1, o.fxn1)
 
   return 1000 * abs(fx) > T(max(S(1), abs(x) * S(1) / T(1)))
 
-proc updateStateGuarded[T, S: SomeFloat, AS: AbstractSecant, AN, AP: AbstractUnivariateZeroMethod, CF: CallableFunction[T, S]](M: AS, N: AN, P: AP, fs: CF, o: UnivariateZeroState[T, S], options: UnivariateZeroOptions[T, T, S, S]) =
+proc updateStateGuarded[T, S: SomeFloat, AS: AbstractSecant, AN,
+  AP: AbstractUnivariateZeroMethod, CF: CallableFunction[T, S]](M: AS, N: AN,
+    P: AP, fs: CF, o: UnivariateZeroState[T, S], options: UnivariateZeroOptions[
+    T, T, S, S]) =
   if doGuardedStep(M, o):
     updateState(N, fs, o, options)
   else:
     updateState(P, fs, o, options)
 
-proc updateStateGuarded[T, S: SomeFloat, AS: AbstractSecant, AN, AP: AbstractUnivariateZeroMethod](M: AS, N: AN, P: AP, fs: proc(a: T): S, o: UnivariateZeroState[T, S], options: UnivariateZeroOptions[T, T, S, S]) =
+proc updateStateGuarded[T, S: SomeFloat, AS: AbstractSecant, AN,
+  AP: AbstractUnivariateZeroMethod](M: AS, N: AN, P: AP, fs: proc(a: T): S,
+    o: UnivariateZeroState[T, S], options: UnivariateZeroOptions[T, T, S, S]) =
   if doGuardedStep(M, o):
     updateState(N, fs, o, options)
   else:
     updateState(P, fs, o, options)
 
-proc initState*[T, S: SomeFloat, CF: CallableFunction[T, S], AS: AbstractSecant](methodes: AS, fs: CF, x:T): UnivariateZeroState[float, S] =
+proc initState*[T, S: SomeFloat, CF: CallableFunction[T, S],
+    AS: AbstractSecant](methodes: AS, fs: CF, x: T): UnivariateZeroState[float, S] =
   let
     x1 = float(x)
     x0 = defaultSecantStep(x1)
   return initState(methodes, fs, (x0, x1))
 
-proc initState*[T: SomeNumber, S: SomeFloat, AS: AbstractSecant](methodes: AS, fs: proc(a: T): S, x:T): UnivariateZeroState[float, S] =
+proc initState*[T: SomeNumber, S: SomeFloat, AS: AbstractSecant](methodes: AS,
+    fs: proc(a: T): S, x: T): UnivariateZeroState[float, S] =
   let
     x1 = float(x)
     x0 = defaultSecantStep(x1)
   return initState(methodes, fs, (x0, x1))
 
-proc initState*[T, S: SomeFloat, CF: CallableFunction[T, S], AS: AbstractSecant](methodes: AS, fs: CF, x: (T, T)): UnivariateZeroState[float, S] =
+proc initState*[T, S: SomeFloat, CF: CallableFunction[T, S],
+    AS: AbstractSecant](methodes: AS, fs: CF, x: (T, T)): UnivariateZeroState[
+        float, S] =
   let
     (x0, x1) = (float(x[0]), float(x[1]))
     (fx0, fx1) = (fs.f(x0), fs.f(x1))
@@ -80,7 +97,8 @@ proc initState*[T, S: SomeFloat, CF: CallableFunction[T, S], AS: AbstractSecant]
 
   return state
 
-proc initState*[T, S: SomeFloat, AS: AbstractSecant](methodes: AS, fs: proc(a: T): S, x: (T, T)): UnivariateZeroState[float, S] =
+proc initState*[T, S: SomeFloat, AS: AbstractSecant](methodes: AS, fs: proc(
+    a: T): S, x: (T, T)): UnivariateZeroState[float, S] =
   let
     (x0, x1) = (float(x[0]), float(x[1]))
     (fx0, fx1) = (fs(x0), fs(x1))
@@ -104,21 +122,26 @@ proc initState*[T, S: SomeFloat, AS: AbstractSecant](methodes: AS, fs: proc(a: T
   return state
 
 
-proc initState*[T, S: SomeFloat, CF: CallableFunction[T, S], AS: AbstractSecant](state: UnivariateZeroState[float, S], methodes: AS, fs: CF, x: T) =
+proc initState*[T, S: SomeFloat, CF: CallableFunction[T, S],
+    AS: AbstractSecant](state: UnivariateZeroState[float, S], methodes: AS,
+    fs: CF, x: T) =
   let
     x1 = float(x)
     x0 = defaultSecantStep(x1)
   initState(state, methodes, fs, (x0, x1))
   return
 
-proc initState*[T: SomeNumber, S: SomeFloat, AS: AbstractSecant](state: UnivariateZeroState[float, S], methodes: AS, fs: proc(a: T): S, x: T) =
+proc initState*[T: SomeNumber, S: SomeFloat, AS: AbstractSecant](
+  state: UnivariateZeroState[float, S], methodes: AS, fs: proc(a: T): S, x: T) =
   let
     x1 = float(x)
     x0 = defaultSecantStep(x1)
   initState(state, methodes, fs, (x0, x1))
   return
 
-proc initState*[T, S: SomeFloat, CF: CallableFunction[T, S], AS: AbstractSecant](state: UnivariateZeroState[float, S], M: AS, f: CF, x: (T, T)) =
+proc initState*[T, S: SomeFloat, CF: CallableFunction[T, S],
+    AS: AbstractSecant](state: UnivariateZeroState[float, S], M: AS, f: CF, x: (
+        T, T)) =
   let
     (x0, x1) = (float(x[0]), float(x[1]))
     (fx0, fx1) = (f.f(x0), f.f(x1))
@@ -126,7 +149,8 @@ proc initState*[T, S: SomeFloat, CF: CallableFunction[T, S], AS: AbstractSecant]
   state.fnevals = 2
   return
 
-proc initState*[T: SomeNumber, S: SomeFloat, AS: AbstractSecant](state: UnivariateZeroState[float, S], M: AS, f: proc(a: T): S, x: (T, T)) =
+proc initState*[T: SomeNumber, S: SomeFloat, AS: AbstractSecant](
+  state: UnivariateZeroState[float, S], M: AS, f: proc(a: T): S, x: (T, T)) =
   let
     (x0, x1) = (float(x[0]), float(x[1]))
     (fx0, fx1) = (f(x0), f(x1))
@@ -140,7 +164,9 @@ proc initState*[T: SomeNumber, S: SomeFloat, AS: AbstractSecant](state: Univaria
 proc findZero*[T, S: SomeFloat, AT: Tracks[T, S] or NullTracks, CF: CallableFunction[T, S]](fs: CF, x0: T, methodes: Order0,
                                                                tracks: AT = NullTracks(),
                                                                verbose = false,
-                                                               kwargs: varargs[UnivariateZeroOptions[T, T, S, S]]): T =
+                                                               kwargs: varargs[
+                                                                   UnivariateZeroOptions[
+                                                                   T, T, S, S]]): T =
   let
     M = Order1()
     N = AlefeldPotraShi()
@@ -153,14 +179,18 @@ proc findZero*[T, S: SomeFloat, AT: Tracks[T, S] or NullTracks, CF: CallableFunc
     l = tracks
 
   if len(kwargs) == 0:
-    return findZero(callable_functions(fs), x0, M, N, tracks=l, verbose = verbose)
+    return findZero(callable_functions(fs), x0, M, N, tracks = l,
+        verbose = verbose)
   else:
-    return findZero(callable_functions(fs), x0, M, N, tracks=l, verbose = verbose, kwargs = kwargs[0])
+    return findZero(callable_functions(fs), x0, M, N, tracks = l,
+        verbose = verbose, kwargs = kwargs[0])
 
 proc findZero*[T, S: SomeFloat, AT: Tracks[T, S] or NullTracks](fs: proc(a: T): S, x0: T, methodes: Order0,
                                                                tracks: AT = NullTracks(),
                                                                verbose = false,
-                                                               kwargs: varargs[UnivariateZeroOptions[T, T, S, S]]): T =
+                                                               kwargs: varargs[
+                                                                   UnivariateZeroOptions[
+                                                                   T, T, S, S]]): T =
   let
     M = Order1()
     N = AlefeldPotraShi()
@@ -173,14 +203,18 @@ proc findZero*[T, S: SomeFloat, AT: Tracks[T, S] or NullTracks](fs: proc(a: T): 
     l = tracks
 
   if len(kwargs) == 0:
-    return findZero(callable_functions(fs), x0, M, N, tracks=l, verbose = verbose)
+    return findZero(callable_functions(fs), x0, M, N, tracks = l,
+        verbose = verbose)
   else:
-    return findZero(callable_functions(fs), x0, M, N, tracks=l, verbose = verbose, kwargs = kwargs[0])
+    return findZero(callable_functions(fs), x0, M, N, tracks = l,
+        verbose = verbose, kwargs = kwargs[0])
 
 
 # Secant
 
-proc updateState*[T, S: SomeFloat, CF: CallableFunction[T, S]](methodes: Order1, fs: CF, o: UnivariateZeroState[T, S], options: UnivariateZeroOptions[T, T, S, S]) =
+proc updateState*[T, S: SomeFloat, CF: CallableFunction[T, S]](methodes: Order1,
+    fs: CF, o: UnivariateZeroState[T, S], options: UnivariateZeroOptions[T, T,
+        S, S]) =
   let
     (xn0, xn1) = (o.xn0, o.xn1)
     (fxn0, fxn1) = (o.fxn0, o.fxn1)
@@ -201,7 +235,8 @@ proc updateState*[T, S: SomeFloat, CF: CallableFunction[T, S]](methodes: Order1,
 
   return
 
-proc updateState*[T, S: SomeFloat](methodes: Order1, fs: proc(a: T): S, o: UnivariateZeroState[T, S], options: UnivariateZeroOptions[T, T, S, S]) =
+proc updateState*[T, S: SomeFloat](methodes: Order1, fs: proc(a: T): S,
+    o: UnivariateZeroState[T, S], options: UnivariateZeroOptions[T, T, S, S]) =
   let
     (xn0, xn1) = (o.xn0, o.xn1)
     (fxn0, fxn1) = (o.fxn0, o.fxn1)
@@ -227,15 +262,20 @@ proc updateState*[T, S: SomeFloat](methodes: Order1, fs: proc(a: T): S, o: Univa
 
 # Order1B
 
-proc updateState*[T, S: SomeFloat, CF: CallableFunction[T, S]](methodes: Order1B, fs: CF, o: UnivariateZeroState[T, S], options: UnivariateZeroOptions[T, T, S, S]) =
+proc updateState*[T, S: SomeFloat, CF: CallableFunction[T, S]](
+  methodes: Order1B, fs: CF, o: UnivariateZeroState[T, S],
+    options: UnivariateZeroOptions[T, T, S, S]) =
   updateStateGuarded(methodes, Secant(), King(), fs, o, options)
   return
 
-proc updateState*[T, S: SomeFloat](methodes: Order1B, fs: proc(a: T): S, o: UnivariateZeroState[T, S], options: UnivariateZeroOptions[T, T, S, S]) =
+proc updateState*[T, S: SomeFloat](methodes: Order1B, fs: proc(a: T): S,
+    o: UnivariateZeroState[T, S], options: UnivariateZeroOptions[T, T, S, S]) =
   updateStateGuarded(methodes, Secant(), King(), fs, o, options)
   return
 
-proc updateState*[T, S: SomeFloat, CF: CallableFunction[T, S]](methodes: King, fs: CF, o: UnivariateZeroState[T, S], options: UnivariateZeroOptions[T, T, S, S]) =
+proc updateState*[T, S: SomeFloat, CF: CallableFunction[T, S]](methodes: King,
+    fs: CF, o: UnivariateZeroState[T, S], options: UnivariateZeroOptions[T, T,
+        S, S]) =
   let
     (x0, x1) = (o.xn0, o.xn1)
     (fx0, fx1) = (o.fxn0, o.fxn1)
@@ -282,7 +322,8 @@ proc updateState*[T, S: SomeFloat, CF: CallableFunction[T, S]](methodes: King, f
 
   return
 
-proc updateState*[T, S: SomeFloat](methodes: King, fs: proc(a: T): S, o: UnivariateZeroState[T, S], options: UnivariateZeroOptions[T, T, S, S]) =
+proc updateState*[T, S: SomeFloat](methodes: King, fs: proc(a: T): S,
+    o: UnivariateZeroState[T, S], options: UnivariateZeroOptions[T, T, S, S]) =
   let
     (x0, x1) = (o.xn0, o.xn1)
     (fx0, fx1) = (o.fxn0, o.fxn1)
@@ -333,15 +374,20 @@ proc updateState*[T, S: SomeFloat](methodes: King, fs: proc(a: T): S, o: Univari
 
 # Order2
 
-proc updateState*[T, S: SomeFloat, CF: CallableFunction[T, S]](methodes: Order2, fs: CF, o: UnivariateZeroState[T, S], options: UnivariateZeroOptions[T, T, S, S]) =
+proc updateState*[T, S: SomeFloat, CF: CallableFunction[T, S]](methodes: Order2,
+    fs: CF, o: UnivariateZeroState[T, S], options: UnivariateZeroOptions[T, T,
+        S, S]) =
   updateStateGuarded(methodes, Secant(), Steffensen(), fs, o, options)
   return
 
-proc updateState*[T, S: SomeFloat](methodes: Order2, fs: proc(a: T): S, o: UnivariateZeroState[T, S], options: UnivariateZeroOptions[T, T, S, S]) =
+proc updateState*[T, S: SomeFloat](methodes: Order2, fs: proc(a: T): S,
+    o: UnivariateZeroState[T, S], options: UnivariateZeroOptions[T, T, S, S]) =
   updateStateGuarded(methodes, Secant(), Steffensen(), fs, o, options)
   return
 
-proc updateState*[T, S: SomeFloat, CF: CallableFunction[T, S]](methodes: Steffensen, fs: CF, o: UnivariateZeroState[T, S], options: UnivariateZeroOptions[T, T, S, S]) =
+proc updateState*[T, S: SomeFloat, CF: CallableFunction[T, S]](
+  methodes: Steffensen, fs: CF, o: UnivariateZeroState[T, S],
+    options: UnivariateZeroOptions[T, T, S, S]) =
   let
     (x0, x1) = (o.xn0, o.xn1)
     (fx0, fx1) = (o.fxn0, o.fxn1)
@@ -366,7 +412,8 @@ proc updateState*[T, S: SomeFloat, CF: CallableFunction[T, S]](methodes: Steffen
 
   return
 
-proc updateState*[T, S: SomeFloat](methodes: Steffensen, fs: proc(a: T): S, o: UnivariateZeroState[T, S], options: UnivariateZeroOptions[T, T, S, S]) =
+proc updateState*[T, S: SomeFloat](methodes: Steffensen, fs: proc(a: T): S,
+    o: UnivariateZeroState[T, S], options: UnivariateZeroOptions[T, T, S, S]) =
   let
     (x0, x1) = (o.xn0, o.xn1)
     (fx0, fx1) = (o.fxn0, o.fxn1)
@@ -394,15 +441,20 @@ proc updateState*[T, S: SomeFloat](methodes: Steffensen, fs: proc(a: T): S, o: U
 
 # Order2B
 
-proc updateState*[T, S: SomeFloat, CF: CallableFunction[T, S]](methodes: Order2B, fs: CF, o: UnivariateZeroState[T, S], options: UnivariateZeroOptions[T, T, S, S]) =
+proc updateState*[T, S: SomeFloat, CF: CallableFunction[T, S]](
+  methodes: Order2B, fs: CF, o: UnivariateZeroState[T, S],
+    options: UnivariateZeroOptions[T, T, S, S]) =
   updateStateGuarded(methodes, Secant(), Esser(), fs, o, options)
   return
 
-proc updateState*[T, S: SomeFloat](methodes: Order2B, fs: proc(a: T): S, o: UnivariateZeroState[T, S], options: UnivariateZeroOptions[T, T, S, S]) =
+proc updateState*[T, S: SomeFloat](methodes: Order2B, fs: proc(a: T): S,
+    o: UnivariateZeroState[T, S], options: UnivariateZeroOptions[T, T, S, S]) =
   updateStateGuarded(methodes, Secant(), Esser(), fs, o, options)
   return
 
-proc updateState*[T, S: SomeFloat, CF: CallableFunction[T, S]](methodes: Esser, fs: CF, o: UnivariateZeroState[T, S], options: UnivariateZeroOptions[T, T, S, S]) =
+proc updateState*[T, S: SomeFloat, CF: CallableFunction[T, S]](methodes: Esser,
+    fs: CF, o: UnivariateZeroState[T, S], options: UnivariateZeroOptions[T, T,
+        S, S]) =
   let
     (x1, fx1) = (o.xn1, o.fxn1)
 
@@ -418,7 +470,7 @@ proc updateState*[T, S: SomeFloat, CF: CallableFunction[T, S]](methodes: Esser, 
     r1 = f0 * 2 * f0 / (f1 - fs1)
     r2 = (f1 - fs1) / (f1 - 2 * f0 + fs1) * f0/2
 
-    k = r2 / (r2 - r1)  # ~ m
+    k = r2 / (r2 - r1) # ~ m
 
   if abs(k) <= 1e-2:
     #@info "estimate for m is *too* small"
@@ -441,7 +493,8 @@ proc updateState*[T, S: SomeFloat, CF: CallableFunction[T, S]](methodes: Esser, 
 
   return
 
-proc updateState*[T, S: SomeFloat](methodes: Esser, fs: proc(a: T): S, o: UnivariateZeroState[T, S], options: UnivariateZeroOptions[T, T, S, S]) =
+proc updateState*[T, S: SomeFloat](methodes: Esser, fs: proc(a: T): S,
+    o: UnivariateZeroState[T, S], options: UnivariateZeroOptions[T, T, S, S]) =
   let
     (x1, fx1) = (o.xn1, o.fxn1)
 
@@ -457,7 +510,7 @@ proc updateState*[T, S: SomeFloat](methodes: Esser, fs: proc(a: T): S, o: Univar
     r1 = f0 * 2 * f0 / (f1 - f_1)
     r2 = (f1 - f_1) / (f1 - 2 * f0 + f_1) * f0/2
 
-    k = r2 / (r2 - r1)  # ~ m
+    k = r2 / (r2 - r1) # ~ m
 
   if abs(k) <= 1e-2:
     #@info "estimate for m is *too* small"
@@ -482,7 +535,9 @@ proc updateState*[T, S: SomeFloat](methodes: Esser, fs: proc(a: T): S, o: Univar
 
 # Order5
 
-proc updateState*[T, S: SomeFloat, CF: CallableFunction[T, S]](M: Order5|KumarSinghAkanksha, fs: CF, o: UnivariateZeroState[T, S], options: UnivariateZeroOptions[T, T, S, S]) =
+proc updateState*[T, S: SomeFloat, CF: CallableFunction[T, S]](
+  M: Order5|KumarSinghAkanksha, fs: CF, o: UnivariateZeroState[T, S],
+    options: UnivariateZeroOptions[T, T, S, S]) =
   let
     xn = o.xn1
     fxn = o.fxn1
@@ -532,7 +587,9 @@ proc updateState*[T, S: SomeFloat, CF: CallableFunction[T, S]](M: Order5|KumarSi
 
   return
 
-proc updateState*[T, S: SomeFloat](M: Order5|KumarSinghAkanksha, fs: proc(a: T): S, o: UnivariateZeroState[T, S], options: UnivariateZeroOptions[T, T, S, S]) =
+proc updateState*[T, S: SomeFloat](M: Order5|KumarSinghAkanksha, fs: proc(
+    a: T): S, o: UnivariateZeroState[T, S], options: UnivariateZeroOptions[T, T,
+        S, S]) =
   let
     xn = o.xn1
     fxn = o.fxn1
@@ -584,7 +641,9 @@ proc updateState*[T, S: SomeFloat](M: Order5|KumarSinghAkanksha, fs: proc(a: T):
 
 
 # If we have a derivative, we have this. (Deprecate?)
-proc updateState*[T, S: SomeFloat](methodes: Order5, fs: FirstDerivative|SecondDerivative, o: UnivariateZeroState[T, S], options: UnivariateZeroOptions[T, T, S, S]) =
+proc updateState*[T, S: SomeFloat](methodes: Order5,
+    fs: FirstDerivative|SecondDerivative, o: UnivariateZeroState[T, S],
+    options: UnivariateZeroOptions[T, T, S, S]) =
   let
     (xn, fxn) = (o.xn1, o.fxn1)
     (a, b) = fDeltaX(fs, xn)
@@ -625,11 +684,13 @@ proc updateState*[T, S: SomeFloat](methodes: Order5, fs: FirstDerivative|SecondD
 
 # Order8
 
-proc updateState*[T, S: SomeFloat, CF: CallableFunction[T, S]](M: Thukral8|Order8, fs: CF, o: UnivariateZeroState[T, S], options: UnivariateZeroOptions[T, T, S, S]) =
+proc updateState*[T, S: SomeFloat, CF: CallableFunction[T, S]](
+  M: Thukral8|Order8, fs: CF, o: UnivariateZeroState[T, S],
+    options: UnivariateZeroOptions[T, T, S, S]) =
   let
     xn = o.xn1
     fxn = o.fxn1
-    
+
   when typeof(M) is Order8:
     let
       wn = steffStep(M, xn, fxn)
@@ -695,11 +756,12 @@ proc updateState*[T, S: SomeFloat, CF: CallableFunction[T, S]](M: Thukral8|Order
 
   return
 
-proc updateState*[T, S: SomeFloat](M: Thukral8|Order8, fs: proc(a: T): S, o: UnivariateZeroState[T, S], options: UnivariateZeroOptions[T, T, S, S]) =
+proc updateState*[T, S: SomeFloat](M: Thukral8|Order8, fs: proc(a: T): S,
+    o: UnivariateZeroState[T, S], options: UnivariateZeroOptions[T, T, S, S]) =
   let
     xn = o.xn1
     fxn = o.fxn1
-    
+
   when typeof(M) is Order8:
     let
       wn = steffStep(M, xn, fxn)
@@ -769,7 +831,9 @@ proc updateState*[T, S: SomeFloat](M: Thukral8|Order8, fs: proc(a: T): S, o: Uni
 
 # Order16
 
-proc updateState*[T, S: SomeFloat, CF: CallableFunction[T, S]](M: Thukral16|Order16, fs: CF, o: UnivariateZeroState[T, S], options: UnivariateZeroOptions[T, T, S, S]) =
+proc updateState*[T, S: SomeFloat, CF: CallableFunction[T, S]](
+  M: Thukral16|Order16, fs: CF, o: UnivariateZeroState[T, S],
+    options: UnivariateZeroOptions[T, T, S, S]) =
   let
     xn = o.xn1
     fxn = o.fxn1
@@ -855,7 +919,8 @@ proc updateState*[T, S: SomeFloat, CF: CallableFunction[T, S]](M: Thukral16|Orde
 
   return
 
-proc updateState*[T, S: SomeFloat](M: Thukral16|Order16, fs: proc(a: T): S, o: UnivariateZeroState[T, S], options: UnivariateZeroOptions[T, T, S, S]) =
+proc updateState*[T, S: SomeFloat](M: Thukral16|Order16, fs: proc(a: T): S,
+    o: UnivariateZeroState[T, S], options: UnivariateZeroOptions[T, T, S, S]) =
   let
     xn = o.xn1
     fxn = o.fxn1

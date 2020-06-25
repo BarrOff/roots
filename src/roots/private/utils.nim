@@ -1,8 +1,10 @@
 import math
 
 # imports from C
-proc nextafterf*(a, b: cfloat): cfloat {.header: "<math.h>", importc: "nextafterf".}
-proc nextafter*(a, b: cdouble): cdouble {.header: "<math.h>", importc: "nextafter".}
+proc nextafterf*(a, b: cfloat): cfloat {.header: "<math.h>",
+    importc: "nextafterf".}
+proc nextafter*(a, b: cdouble): cdouble {.header: "<math.h>",
+    importc: "nextafter".}
 
 type
   # type to throw on succesful convergence
@@ -63,7 +65,7 @@ proc defaultSecantStep*(x1: float32): float32 =
 
   return x0
 
-proc steffStep*[T: SomeFloat](x: T, fx: SomeFloat): T =           # NO M: Any!
+proc steffStep*[T: SomeFloat](x: T, fx: SomeFloat): T = # NO M: Any!
   return x + T(fx)
 
 proc guardedSecantStep*[T: SomeFloat](a, b, fa, fb: T): (T, bool) =
@@ -140,7 +142,8 @@ proc fbracketRatio*[T: SomeFloat](a, b, c, fa, fb, fc: T): (T, bool) =
 
   return (outer, isIssue(outer))
 
-proc identifyStartingPoint*[T: SomeFloat](f: proc (x: T): T, a, b: T, N: SomeInteger): T =
+proc identifyStartingPoint*[T: SomeFloat](f: proc (x: T): T, a, b: T,
+    N: SomeInteger): T =
   let
     stepSize = (abs(a) - abs(b)) / N
   var
@@ -157,6 +160,6 @@ proc identifyStartingPoint*[T: SomeFloat](a, b: T, sfxs: seq[int]): T =
   let
     N = len(sfxs) - 1
     p0 = a + (b - a) / 2
-    p1 = p0 + (b - a) / (2 * N) * sfxs[0] * sum(sfxs[1:N - 1])
+    p1 = p0 + (b - a) / (2 * N) * sfxs[0] * sum(sfxs[1: N - 1])
 
   return p1

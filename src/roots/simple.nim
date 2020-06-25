@@ -10,12 +10,17 @@ let
   eps32 = 8 * max(nextafterf(1.0, Inf) - 1.0, 1.0 - nextafterf(1.0, 0.0))
 
 # forward declarations
-proc hasConverged*[S: SomeFloat](Val: bool, x1, x2, m: float, ym: S, atol, rtol: float): bool
-proc secant*[T, S: SomeFloat](f: proc(x: T): S, a, b: T, atol: T = 0.0, rtol: T = NaN, maxevals = 100): T
-proc secant*[T, S: SomeFloat, CF: CallableFunction[T, S]](f: CF, a, b: T, atol: T = 0.0, rtol: T = NaN, maxevals = 100): T
+proc hasConverged*[S: SomeFloat](Val: bool, x1, x2, m: float, ym: S, atol,
+    rtol: float): bool
+proc secant*[T, S: SomeFloat](f: proc(x: T): S, a, b: T, atol: T = 0.0,
+    rtol: T = NaN, maxevals = 100): T
+proc secant*[T, S: SomeFloat, CF: CallableFunction[T, S]](f: CF, a, b: T,
+    atol: T = 0.0, rtol: T = NaN, maxevals = 100): T
+proc muller_step*[T, S: SomeFloat](a, b, c: T, fa, fb, fc: S): T
 
 
-proc bisection*[T, S: SomeFloat, CF: CallableFunction[float, S]](f: CF, a, b: T, xatol: float = 0.0, xrtol: float = 0.0): float =
+proc bisection*[T, S: SomeFloat, CF: CallableFunction[float, S]](f: CF, a, b: T,
+    xatol: float = 0.0, xrtol: float = 0.0): float =
   var
     (x1, x2) = adjustBracket((float(a), float(b)))
   let
@@ -23,7 +28,7 @@ proc bisection*[T, S: SomeFloat, CF: CallableFunction[float, S]](f: CF, a, b: T,
     rtol = abs(xrtol)
     catol = classify(atol)
     crtol = classify(rtol)
-  
+
   var
     CT: bool
 
@@ -59,7 +64,8 @@ proc bisection*[T, S: SomeFloat, CF: CallableFunction[float, S]](f: CF, a, b: T,
     xm = middle2(x1, x2)
     ym = f.f(xm)
 
-proc bisection*[T, S: SomeFloat](f: proc(x: float): S, a, b: T, xatol: float = 0.0, xrtol: float = 0.0): float =
+proc bisection*[T, S: SomeFloat](f: proc(x: float): S, a, b: T,
+    xatol: float = 0.0, xrtol: float = 0.0): float =
   var
     (x1, x2) = adjustBracket((float(a), float(b)))
   let
@@ -67,7 +73,7 @@ proc bisection*[T, S: SomeFloat](f: proc(x: float): S, a, b: T, xatol: float = 0
     rtol = abs(xrtol)
     catol = classify(atol)
     crtol = classify(rtol)
-  
+
   var
     CT: bool
 
@@ -104,7 +110,8 @@ proc bisection*[T, S: SomeFloat](f: proc(x: float): S, a, b: T, xatol: float = 0
     ym = f(xm)
 
 
-proc hasConverged[S: SomeFloat](Val: bool, x1, x2, m: float, ym: S, atol, rtol: float): bool =
+proc hasConverged[S: SomeFloat](Val: bool, x1, x2, m: float, ym: S, atol,
+    rtol: float): bool =
   let
     cym = classify(ym)
 
@@ -124,13 +131,14 @@ proc hasConverged[S: SomeFloat](Val: bool, x1, x2, m: float, ym: S, atol, rtol: 
 
 # secantMethod
 
-proc secantMethod*[T, S: SomeFloat, CF: CallableFunction[T, S]](f: CF, xs: T|(T, T), atol: float = 0.0, rtol: float = NaN, maxevals = 100): T =
+proc secantMethod*[T, S: SomeFloat, CF: CallableFunction[T, S]](f: CF, xs: T|(T,
+    T), atol: float = 0.0, rtol: float = NaN, maxevals = 100): T =
   var
     a, b, h: T
 
   when typeof(xs) is T:
     a = xs
-    
+
     when sizeof(T) == 8:
       h = max(nextafter(1.0, Inf) - 1.0, 1.0 - nextafter(1.0, 0.0))
     else:
@@ -151,13 +159,14 @@ proc secantMethod*[T, S: SomeFloat, CF: CallableFunction[T, S]](f: CF, xs: T|(T,
 
   return secant(f, a, b, atol, rtol, maxevals)
 
-proc secantMethod*[T, S: SomeFloat](f: proc(x: T): S, xs: T|(T, T), atol: float = 0.0, rtol: float = NaN, maxevals = 100): T =
+proc secantMethod*[T, S: SomeFloat](f: proc(x: T): S, xs: T|(T, T),
+    atol: float = 0.0, rtol: float = NaN, maxevals = 100): T =
   var
     a, b, h: T
 
   when typeof(xs) is T:
     a = xs
-    
+
     when sizeof(T) == 8:
       h = max(nextafter(1.0, Inf) - 1.0, 1.0 - nextafter(1.0, 0.0))
     else:
@@ -178,7 +187,8 @@ proc secantMethod*[T, S: SomeFloat](f: proc(x: T): S, xs: T|(T, T), atol: float 
 
   return secant(f, a, b, atol, rtol, maxevals)
 
-proc secant*[T, S: SomeFloat, CF: CallableFunction[T, S]](f: CF, a, b: T, atol: T = 0.0, rtol: T = NaN, maxevals = 100): T =
+proc secant*[T, S: SomeFloat, CF: CallableFunction[T, S]](f: CF, a, b: T,
+    atol: T = 0.0, rtol: T = NaN, maxevals = 100): T =
   let
     nan = (0 * a) / (0 * a)
   var
@@ -234,7 +244,8 @@ proc secant*[T, S: SomeFloat, CF: CallableFunction[T, S]](f: CF, a, b: T, atol: 
 
   return nan
 
-proc secant*[T, S: SomeFloat](f: proc(x: T): S, a, b: T, atol: T = 0.0, rtol: T = NaN, maxevals = 100): T =
+proc secant*[T, S: SomeFloat](f: proc(x: T): S, a, b: T, atol: T = 0.0,
+    rtol: T = NaN, maxevals = 100): T =
   let
     nan = (0 * a) / (0 * a)
   var
@@ -365,7 +376,8 @@ proc muller_step*[T, S: SomeFloat](a, b, c: T, fa, fb, fc: S): T =
 
 # newton
 
-proc newton*[T, S: SomeFloat](f0, f1: proc(a: T): S, x0: T, xatol: T = NaN, xrtol: T = NaN, maxevals = 100): T =
+proc newton*[T, S: SomeFloat](f0, f1: proc(a: T): S, x0: T, xatol: T = NaN,
+    xrtol: T = NaN, maxevals = 100): T =
   var
     x = x0
     atol, rtol: T
@@ -383,11 +395,13 @@ proc newton*[T, S: SomeFloat](f0, f1: proc(a: T): S, x0: T, xatol: T = NaN, xrto
     if classify(xatol) != fcNan:
       atol = xatol
     else:
-      atol = pow(max(nextafterf(1.0, Inf) - 1.0, 1.0 - nextafterf(1.0, 0.0)), 4 / 5)
+      atol = pow(max(nextafterf(1.0, Inf) - 1.0, 1.0 - nextafterf(1.0, 0.0)),
+          4 / 5)
     if classify(xrtol) != fcNan:
       rtol = xrtol
     else:
-      rtol = pow(max(nextafterf(1.0, Inf) - 1.0, 1.0 - nextafterf(1.0, 0.0)), 4 / 5)
+      rtol = pow(max(nextafterf(1.0, Inf) - 1.0, 1.0 - nextafterf(1.0, 0.0)),
+          4 / 5)
 
   var
     xo = Inf
@@ -408,7 +422,8 @@ proc newton*[T, S: SomeFloat](f0, f1: proc(a: T): S, x0: T, xatol: T = NaN, xrto
 
   raise newException(InitialValueError, "No convergence")
 
-proc newton*[T, S: SomeFloat, TW: TupleWrapper[T, S]](f: TW, x0: T, xatol: T = NaN, xrtol: T = NaN, maxevals = 100): T =
+proc newton*[T, S: SomeFloat, TW: TupleWrapper[T, S]](f: TW, x0: T,
+    xatol: T = NaN, xrtol: T = NaN, maxevals = 100): T =
   var
     x = x0
     atol, rtol: T
@@ -426,11 +441,13 @@ proc newton*[T, S: SomeFloat, TW: TupleWrapper[T, S]](f: TW, x0: T, xatol: T = N
     if classify(xatol) != fcNan:
       atol = xatol
     else:
-      atol = pow(max(nextafterf(1.0, Inf) - 1.0, 1.0 - nextafterf(1.0, 0.0)), 4 / 5)
+      atol = pow(max(nextafterf(1.0, Inf) - 1.0, 1.0 - nextafterf(1.0, 0.0)),
+          4 / 5)
     if classify(xrtol) != fcNan:
       rtol = xrtol
     else:
-      rtol = pow(max(nextafterf(1.0, Inf) - 1.0, 1.0 - nextafterf(1.0, 0.0)), 4 / 5)
+      rtol = pow(max(nextafterf(1.0, Inf) - 1.0, 1.0 - nextafterf(1.0, 0.0)),
+          4 / 5)
 
   var
     xo = Inf
@@ -486,7 +503,8 @@ proc dfree*[T, S: SomeFloat](f: proc(a: T): S, xs: T|(T, T)): T =
     MAXCNT: int
 
   when sizeof(T) == 8:
-    MAXCNT = 5 * int(ceil(-log(max(nextafter(1.0, Inf) - 1.0, 1.0 - nextafter(1.0, 0.0)), exp(1.0))))
+    MAXCNT = 5 * int(ceil(-log(max(nextafter(1.0, Inf) - 1.0, 1.0 - nextafter(
+        1.0, 0.0)), exp(1.0))))
 
   if abs(fa) > abs(fb):
     (a, fa, b, fb) = (b, fb, a, fa)
@@ -535,7 +553,8 @@ proc dfree*[T, S: SomeFloat](f: proc(a: T): S, xs: T|(T, T)): T =
         continue
 
     inc(quadCtr)
-    if (quadCtr > MAXQUAD) or (cnt > MAXCNT) or (classify(gamma - b) == fcZero) or (classify(gamma - b) == fcNegZero) or (classify(gamma) == fcNan):
+    if (quadCtr > MAXQUAD) or (cnt > MAXCNT) or (classify(gamma - b) ==
+        fcZero) or (classify(gamma - b) == fcNegZero) or (classify(gamma) == fcNan):
       var
         bprev, bnext: T
       when sizeof(T) == 8:
@@ -550,12 +569,14 @@ proc dfree*[T, S: SomeFloat](f: proc(a: T): S, xs: T|(T, T)): T =
         return b
       if sgn(fb) * sgn(fbnext) < 0:
         return b
-      for i in @[ (b, fb), (bprev, fbprev), (bnext, fbnext) ]:
+      for i in @[ (b, fb), (bprev, fbprev), (bnext, fbnext)]:
         when sizeof(T) == 8:
-          if abs(i[1]) <= 8 * max(nextafter(1.0, Inf) - 1.0, 1.0 - nextafter(1.0, 0.0)):
+          if abs(i[1]) <= 8 * max(nextafter(1.0, Inf) - 1.0, 1.0 - nextafter(
+              1.0, 0.0)):
             return i[0]
         else:
-          if abs(i[1]) <= 8 * max(nextafterf(1.0, Inf) - 1.0, 1.0 - nextafterf(1.0, 0.0)):
+          if abs(i[1]) <= 8 * max(nextafterf(1.0, Inf) - 1.0, 1.0 - nextafterf(
+              1.0, 0.0)):
             return i[0]
       return nan # Failed.
 

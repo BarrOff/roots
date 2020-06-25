@@ -12,7 +12,7 @@ type
   # types needed for bracketing
 type
   InitialValueError* = object of ValueError
-  AbstractBisection* = object of  AbstractBracketing
+  AbstractBisection* = object of AbstractBracketing
   Bisection* = object of AbstractBisection
   BisectionExact* = object of AbstractBisection
   AbstractAlefeldPotraShi* = object of AbstractBracketing
@@ -71,16 +71,25 @@ type
 # proc findZero*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod, CF: CallableFunction[T, S]](M: A, F: CF, state: UnivariateZeroState[T, S], l: Tracks[T, S]|NullTracks = Nulltracks())
 # proc findZero*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod](M: A, F: proc(a: T): S, state: UnivariateZeroState[T, S], l: Tracks[T, S]|NullTracks = Nulltracks())
 proc decideConvergence*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod, CF: CallableFunction[T, S]](M: A, F: CF,
-                                                                          state: UnivariateZeroState[T, S],
-                                                                          options: UnivariateZeroOptions[T, T, S, S]): T
+                                                                          state: UnivariateZeroState[
+                                                                              T,
+                                                                              S],
+                                                                          options: UnivariateZeroOptions[
+                                                                              T,
+                                                                              T,
+                                                                              S, S]): T
 
 
 proc runBisection*[T, S: SomeFloat, A: AbstractBracketing, CF: CallableFunction[T, S]](N: A, f: CF, xs: (T, T),
-                                                           state: UnivariateZeroState[T, S],
-                                                           options: UnivariateZeroOptions[T, T, S, S])
+                                                           state: UnivariateZeroState[
+                                                               T, S],
+                                                           options: UnivariateZeroOptions[
+                                                               T, T, S, S])
 proc runBisection*[T, S: SomeFloat, A: AbstractBracketing](N: A, f: proc(a: T): S, xs: (T, T),
-                                                           state: UnivariateZeroState[T, S],
-                                                           options: UnivariateZeroOptions[T, T, S, S])
+                                                           state: UnivariateZeroState[
+                                                               T, S],
+                                                           options: UnivariateZeroOptions[
+                                                               T, T, S, S])
 
 
 ## Start library functions
@@ -93,7 +102,8 @@ proc incsteps*[T, S: SomeFloat](o: UnivariateZeroState[T, S], k = 1) =
 
 # initState resembles the init_state function of Julia
 # initialize state for most methods
-proc initState*[T, S: SomeFloat, A: AbstractNonSecant, CF: CallableFunction[T, S]](methodes: A, fs: CF, x: T): UnivariateZeroState[T, S] =
+proc initState*[T, S: SomeFloat, A: AbstractNonSecant, CF: CallableFunction[T,
+    S]](methodes: A, fs: CF, x: T): UnivariateZeroState[T, S] =
   let
     x1 = x
     fnevals = 1
@@ -107,8 +117,9 @@ proc initState*[T, S: SomeFloat, A: AbstractNonSecant, CF: CallableFunction[T, S
   result.xConverged = false
   result.fConverged = false
   result.convergenceFailed = false
- 
-proc initState*[T, S: SomeFloat, A: AbstractNonSecant](methodes: A, fs: proc(a: T): S, x: SomeNumber): UnivariateZeroState[T, S] =
+
+proc initState*[T, S: SomeFloat, A: AbstractNonSecant](methodes: A, fs: proc(
+    a: T): S, x: SomeNumber): UnivariateZeroState[T, S] =
   let
     x1 = x
     fnevals = 1
@@ -122,7 +133,7 @@ proc initState*[T, S: SomeFloat, A: AbstractNonSecant](methodes: A, fs: proc(a: 
   result.xConverged = false
   result.fConverged = false
   result.convergenceFailed = false
- 
+
 ## This function is used to reset the state to an initial value
 ## As initializing a state is somewhat costly, this can be useful when many
 ## function calls would be used.
@@ -136,7 +147,8 @@ proc initState*[T, S: SomeFloat, A: AbstractNonSecant](methodes: A, fs: proc(a: 
 #    out[i] = find_zero(M, f1, options, state)
 # end
 # init_state has a method call variant
-proc initState*[T, S: SomeFloat](state: UnivariateZeroState[T, S], x1, x0: T, m: seq[T], y1, y0: S, fm: seq[S]) =
+proc initState*[T, S: SomeFloat](state: UnivariateZeroState[T, S], x1, x0: T,
+    m: seq[T], y1, y0: S, fm: seq[S]) =
   state.xn1 = x1
   state.xn0 = x0
   state.m = m
@@ -152,7 +164,8 @@ proc initState*[T, S: SomeFloat](state: UnivariateZeroState[T, S], x1, x0: T, m:
   state.message = ""
   return
 
-proc initState*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod, CF: CallableFunction[T, S]](state: UnivariateZeroState[T, S], a: A, fs: CF, x: T) =
+proc initState*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod,
+    CF: CallableFunction[T, S]](state: UnivariateZeroState[T, S], a: A, fs: CF, x: T) =
   let
     x1 = float(x)
     fx1 = fs.f(x1)
@@ -160,7 +173,8 @@ proc initState*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod, CF: CallableFu
   initState(state, x1, T(0.0), @[T],
              fx1, S(0.0), @[S])
 
-proc initState*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod](state: UnivariateZeroState[T, S], a: A, fs: proc(a: T): S, x: T) =
+proc initState*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod](
+  state: UnivariateZeroState[T, S], a: A, fs: proc(a: T): S, x: T) =
   let
     x1 = float(x)
     fx1 = fs(x1)
@@ -169,7 +183,8 @@ proc initState*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod](state: Univari
              fx1, S(0.0), @[S])
 
 
-proc copyState*[T, S: SomeNumber](state: UnivariateZeroState[T, S]): UnivariateZeroState[T, S] =
+proc copyState*[T, S: SomeNumber](state: UnivariateZeroState[T,
+    S]): UnivariateZeroState[T, S] =
   new(result)
   result.xn1 = state.xn1
   result.xn0 = state.xn0
@@ -214,13 +229,15 @@ proc copyState*[T, S: SomeNumber](dst, src: UnivariateZeroState[T, S]) =
 # function evaluations is not capped, due to `maxfnevals=typemax(Int)`,
 # and `strict=false`.
 
-template defaultTolerances*(M: AbstractUnivariateZeroMethod): (float, float, float, float, int, int, bool) =
+template defaultTolerances*(M: AbstractUnivariateZeroMethod): (float, float,
+    float, float, int, int, bool) =
   defaultTolerances(M, float, float)
 
-proc defaultTolerances*(M: AbstractNonBracketing, T, S: typedesc): (T, T, S, S, int, int, bool) =
+proc defaultTolerances*(M: AbstractNonBracketing, T, S: typedesc): (T, T, S, S,
+    int, int, bool) =
   when sizeof(T) == 8:
     let
-      xatol = nextafter(1.0, 2.0 ) - 1.0
+      xatol = nextafter(1.0, 2.0) - 1.0
       xrtol = nextafter(1.0, 2.0) - 1.0
   else:
     let
@@ -244,7 +261,8 @@ proc defaultTolerances*(M: AbstractNonBracketing, T, S: typedesc): (T, T, S, S, 
   return (xatol, xrtol, atol, rtol, maxevals, maxfnevals, strict)
 
 # represents the init_options function of Julia
-proc initOptions*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod](M: A, state: UnivariateZeroState[T, S]): UnivariateZeroOptions[T, T, S, S] =
+proc initOptions*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod](M: A,
+    state: UnivariateZeroState[T, S]): UnivariateZeroOptions[T, T, S, S] =
   let
     defs = defaultTolerances(M, T, S)
 
@@ -259,7 +277,8 @@ proc initOptions*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod](M: A, state:
 
 # represents the init_options! function of Julia
 # reset options to default values
-proc initOptions2*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod](options: UnivariateZeroOptions[T, T, S, S], M: A) =
+proc initOptions2*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod](
+  options: UnivariateZeroOptions[T, T, S, S], M: A) =
   let
     defs = defaultTolerances(M, T, S)
 
@@ -281,7 +300,8 @@ proc logStep*[T, S: SomeFloat](s: Tracks[T, S], M: bool, o: UnivariateZeroState[
   add(s.fs, o.fxn1)
   return
 
-proc logStep*[T, S: SomeFloat](s: Tracks[T, S], M: bool, o: UnivariateZeroState[T, S], init: int) =
+proc logStep*[T, S: SomeFloat](s: Tracks[T, S], M: bool, o: UnivariateZeroState[
+    T, S], init: int) =
   logStep(s, M, o)
 
 proc showTracks*[T, S: SomeFloat, A: AbstractBracketing](l: Tracks[T, S], M: A) =
@@ -290,15 +310,16 @@ proc showTracks*[T, S: SomeFloat, A: AbstractBracketing](l: Tracks[T, S], M: A) 
     n = len(xs) div 2 - 1
     j = 0
   for i in 0..n:
-    echo "(a_", i, ", b_", i, ") = (", xs[j], ", ",xs[j + 1], ")"
+    echo "(a_", i, ", b_", i, ") = (", xs[j], ", ", xs[j + 1], ")"
     j += 2
   return
 
 proc showTracks*[T, S: SomeFloat, A: AbstractNonBracketing](s: Tracks[T, S], M: A) =
-    for index, item in zip(s.xs, s.fs):
-      echo "x_", index, " = ", float(item[0]), ",\t fx_", index, " = ", float(item[1])
-    echo ""
-    return
+  for index, item in zip(s.xs, s.fs):
+    echo "x_", index, " = ", float(item[0]), ",\t fx_", index, " = ", float(
+        item[1])
+  echo ""
+  return
 
 
 
@@ -307,7 +328,8 @@ proc showTracks*[T, S: SomeFloat, A: AbstractNonBracketing](s: Tracks[T, S], M: 
 proc fDeltaX*[T, S: SomeFloat](F: DerivativeFree[T, S], x: T): S =
   return F.f(x)
 
-proc fDeltaX*[T, S: SomeFloat](F: FirstDerivative[T, S]|SecondDerivative[T, S], x: T): (S, S) =
+proc fDeltaX*[T, S: SomeFloat](F: FirstDerivative[T, S]|SecondDerivative[T, S],
+    x: T): (S, S) =
   let
     fx = F.f(x)
     fpx = F.fp(x)
@@ -334,12 +356,14 @@ proc callableFunctions*[T, S: SomeFloat](fs: proc(a: T): S): DerivativeFree[T, S
   new(result)
   result.f = fs
 
-proc callableFunctions*[T, S](fs: (proc(a: T): S, proc(a: T): S)): FirstDerivative[T, S] =
+proc callableFunctions*[T, S](fs: (proc(a: T): S, proc(
+    a: T): S)): FirstDerivative[T, S] =
   new(result)
   result.f = fs[0]
   result.fp = fs[1]
 
-proc callableFunctions*[T, S](fs: (proc(a: T): S, proc(a: T): S, proc(a: T): S)): SecondDerivative[T, S] =
+proc callableFunctions*[T, S](fs: (proc(a: T): S, proc(a: T): S, proc(
+    a: T): S)): SecondDerivative[T, S] =
   new(result)
   result.f = fs[0]
   result.fp = fs[1]
@@ -385,7 +409,8 @@ proc isFApprox0*[T: SomeFloat](fa, a, atol, rtol: T): bool {.inline.} =
 # * `state.stopped = true` if the number of steps exceed `maxevals` or the number of function calls exceeds `maxfnevals`.
 #
 # In `findZero`, stopped values (and xConverged) are checked for convergence with a relaxed tolerance.
-proc assessConvergence*[T, S: SomeFloat](methodes: bool, state: UnivariateZeroState[T, S], options: UnivariateZeroOptions[T, T, S, S]): bool =
+proc assessConvergence*[T, S: SomeFloat](methodes: bool,
+    state: UnivariateZeroState[T, S], options: UnivariateZeroOptions[T, T, S, S]): bool =
   let
     xn0 = state.xn0
     xn1 = state.xn1
@@ -407,7 +432,7 @@ proc assessConvergence*[T, S: SomeFloat](methodes: bool, state: UnivariateZeroSt
     state.convergenceFailed = true
     state.message &= "Inf produced by algorithm. "
     return true
-  
+
   # f(xstar) ≈ xstar * f'(xstar)*eps(), so we pass in lambda
   if isFApprox0(fxn1, xn1, options.abstol, options.reltol):
     (state.xstar, state.fxstar) = (xn1, fxn1)
@@ -416,7 +441,8 @@ proc assessConvergence*[T, S: SomeFloat](methodes: bool, state: UnivariateZeroSt
 
   # stop when xn1 ~ xn.
   # in find_zeros there is a check that f could be a zero with a relaxed tolerance
-  if abs(xn1 - xn0) < max(options.xabstol, max(abs(xn1), abs(xn0)) * options.xreltol):
+  if abs(xn1 - xn0) < max(options.xabstol, max(abs(xn1), abs(xn0)) *
+      options.xreltol):
     (state.xstar, state.fxstar) = (xn1, fxn1)
     state.message &= "x_n ≈ x_(n-1). "
     state.xConverged = true
@@ -434,7 +460,9 @@ proc assessConvergence*[T, S: SomeFloat](methodes: bool, state: UnivariateZeroSt
 
   return false
 
-proc showTrace*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod, B: AbstractBracketing](methodes: A, N: B, state: UnivariateZeroState[T, S], tracks: Tracks[T, S]) =
+proc showTrace*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod,
+    B: AbstractBracketing](methodes: A, N: B, state: UnivariateZeroState[T, S],
+    tracks: Tracks[T, S]) =
   let
     converged = state.xConverged or state.fConverged
 
@@ -442,7 +470,7 @@ proc showTrace*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod, B: AbstractBra
 
   if converged:
     echo "* Converged to: ", state.xn1
-    echo "* Algorithm: ", " with possible bracketing with "#, $(N) #$(methodes),
+    echo "* Algorithm: ", " with possible bracketing with " #, $(N) #$(methodes),
 
     echo "* iterations: ", $(state.steps)
     echo "* function evaluations: ", $(state.fnevals)
@@ -460,7 +488,8 @@ proc showTrace*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod, B: AbstractBra
   echo "Trace: "
   showTracks(tracks, methodes)
 
-proc showTrace*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod](methodes: A, state: UnivariateZeroState[T, S], tracks: Tracks[T, S]) =
+proc showTrace*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod](methodes: A,
+    state: UnivariateZeroState[T, S], tracks: Tracks[T, S]) =
   let
     converged = state.xConverged or state.fConverged
 
@@ -469,9 +498,9 @@ proc showTrace*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod](methodes: A, s
   if converged:
     echo "* Converged to: ", state.xn1
     when A is AbstractBracketing:
-      echo "* Algorithm: "#, $(methodes)
+      echo "* Algorithm: " #, $(methodes)
     else:
-      echo "* Algorithm: ", " with possible bracketing with "#, $(N) #$(methodes),
+      echo "* Algorithm: ", " with possible bracketing with " #, $(N) #$(methodes),
 
     echo "* iterations: ", $(state.steps)
     echo "* function evaluations: ", $(state.fnevals)
@@ -496,7 +525,10 @@ proc showTrace*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod](methodes: A, s
 # from bracketing import findZero
 
 # Interface to one of several methods for find zeros of a univariate function.
-proc findZero*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod, B: AbstractBracketing, CF: CallableFunction[T, S]](fs: CF, x0: T|(T, T), methodes: A, N: B, tracks: Tracks[T, S]|NullTracks = NullTracks(), verbose = false, kwargs: varargs[UnivariateZeroOptions[T, T, S, S]]): T =
+proc findZero*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod,
+    B: AbstractBracketing, CF: CallableFunction[T, S]](fs: CF, x0: T|(T, T),
+    methodes: A, N: B, tracks: Tracks[T, S]|NullTracks = NullTracks(),
+    verbose = false, kwargs: varargs[UnivariateZeroOptions[T, T, S, S]]): T =
   let
     F = callable_functions(fs)
     state = initState(methodes, F, x0)
@@ -543,7 +575,10 @@ proc findZero*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod, B: AbstractBrac
     else:
       return xstar
 
-proc findZero*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod, B: AbstractBracketing](fs: proc(a: T): S, x0: T|(T, T), methodes: A, N: B, tracks: Tracks[T, S]|NullTracks = NullTracks(), verbose = false, kwargs: varargs[UnivariateZeroOptions[T, T, S, S]]): T =
+proc findZero*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod,
+    B: AbstractBracketing](fs: proc(a: T): S, x0: T|(T, T), methodes: A, N: B,
+    tracks: Tracks[T, S]|NullTracks = NullTracks(), verbose = false,
+    kwargs: varargs[UnivariateZeroOptions[T, T, S, S]]): T =
   let
     F = callable_functions(fs)
     state = initState(methodes, F, x0)
@@ -562,9 +597,9 @@ proc findZero*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod, B: AbstractBrac
       l: Tracks[T, S]
     new(l)
     when A is AbstractBracketing:
-        xstar = findZero(methodes, F, options, state, l)
+      xstar = findZero(methodes, F, options, state, l)
     else:
-        xstar = findZero(methodes, N, F, options, state, l)
+      xstar = findZero(methodes, N, F, options, state, l)
 
     when l is Tracks[T, T]:
       if verbose:
@@ -578,9 +613,9 @@ proc findZero*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod, B: AbstractBrac
     let
       l = tracks
     when A is AbstractBracketing:
-        xstar = findZero(methodes, F, options, state, l)
+      xstar = findZero(methodes, F, options, state, l)
     else:
-        xstar = findZero(methodes, N, F, options, state, l)
+      xstar = findZero(methodes, N, F, options, state, l)
 
     when l is Tracks[T, T]:
       if verbose:
@@ -591,7 +626,10 @@ proc findZero*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod, B: AbstractBrac
     else:
       return xstar
 
-proc findZero*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod, CF: CallableFunction[T, S]](fs: CF, x0: T|(T, T), methodes: A, tracks: Tracks[T, S]|NullTracks = NullTracks(), verbose = false, kwargs: varargs[UnivariateZeroOptions[T, T, S, S]]): T =
+proc findZero*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod,
+    CF: CallableFunction[T, S]](fs: CF, x0: T|(T, T), methodes: A,
+    tracks: Tracks[T, S]|NullTracks = NullTracks(), verbose = false,
+    kwargs: varargs[UnivariateZeroOptions[T, T, S, S]]): T =
   let
     F = callable_functions(fs)
     state = initState(methodes, F, x0)
@@ -633,7 +671,10 @@ proc findZero*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod, CF: CallableFun
     else:
       return xstar
 
-proc findZero*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod](fs: proc(a: T): S, x0: T|(T, T), methodes: A, tracks: Tracks[T, S]|NullTracks = NullTracks(), verbose = false, kwargs: varargs[UnivariateZeroOptions[T, T, S, S]]): T =
+proc findZero*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod](fs: proc(
+    a: T): S, x0: T|(T, T), methodes: A, tracks: Tracks[T,
+    S]|NullTracks = NullTracks(), verbose = false, kwargs: varargs[
+    UnivariateZeroOptions[T, T, S, S]]): T =
   let
     F = callable_functions(fs)
     state = initState(methodes, F, x0)
@@ -682,14 +723,18 @@ proc findZero*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod](fs: proc(a: T):
 # but as updateState gets defined in the following modules
 # it got moved to the bottom of bracketing.nim
 
-proc findZero*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod, CF: CallableFunction[T, S]](M: A, F: CF, state: UnivariateZeroState[T, S], l: Tracks[T, S]|NullTracks = Nulltracks()) =
+proc findZero*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod,
+    CF: CallableFunction[T, S]](M: A, F: CF, state: UnivariateZeroState[T, S],
+    l: Tracks[T, S]|NullTracks = Nulltracks()) =
   let
     options = initOptions(M, state)
 
   findZero(M, F, options, state, l)
   return
 
-proc findZero*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod](M: A, F: proc(a: T): S, state: UnivariateZeroState[T, S], l: Tracks[T, S]|NullTracks = Nulltracks()) =
+proc findZero*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod](M: A, F: proc(
+    a: T): S, state: UnivariateZeroState[T, S], l: Tracks[T,
+    S]|NullTracks = Nulltracks()) =
   let
     options = initOptions(M, state)
 
@@ -698,22 +743,29 @@ proc findZero*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod](M: A, F: proc(a
 
 # state has stopped, this identifies if it has converged
 proc decideConvergence*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod, CF: CallableFunction[T, S]](M: A, F: CF,
-                                                                          state: UnivariateZeroState[T, S],
-                                                                          options: UnivariateZeroOptions[T, T, S, S]): T =
+                                                                          state: UnivariateZeroState[
+                                                                              T,
+                                                                              S],
+                                                                          options: UnivariateZeroOptions[
+                                                                              T,
+                                                                              T,
+                                                                              S, S]): T =
   let
     xn1 = state.xstar
     fxn1 = state.fxstar
 
   if state.stopped or (state.xConverged and not state.fConverged):
     when sizeof(T) == 8:
-      for u in @[float(nextafter(cdouble(xn1), cdouble(-Inf))), float(nextafter(cdouble(xn1), cdouble(Inf)))]:
+      for u in @[float(nextafter(cdouble(xn1), cdouble(-Inf))), float(nextafter(
+          cdouble(xn1), cdouble(Inf)))]:
         let
           fu = F.f(u)
         if fu == 0.0 or fu * fxn1 < 0.0:
           state.message &= "Change of sign at xn identified. "
           state.fConverged = true
     else:
-      for u in @[float32(nextafterf(cfloat(xn1), cfloat(-Inf))), float32(nextafterf(cfloat(xn1), cfloat(Inf)))]:
+      for u in @[float32(nextafterf(cfloat(xn1), cfloat(-Inf))), float32(
+          nextafterf(cfloat(xn1), cfloat(Inf)))]:
         let
           fu = F.f(u)
         if fu == 0.0 or fu * fxn1 < 0.0:
@@ -730,7 +782,8 @@ proc decideConvergence*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod, CF: Ca
         xstar = state.xn1
         fxstar = state.fxn1
 
-      if isFApprox0(fxstar, xstar, options.abstol, options.reltol, relaxed = true):
+      if isFApprox0(fxstar, xstar, options.abstol, options.reltol,
+          relaxed = true):
         (state.xstar, state.fxstar) = (xstar, fxstar)
         let
           msg = "Algorithm stopped early, but |f(xn)| < ϵ^(1/3), where ϵ depends on xn, rtol, and atol. "
@@ -758,8 +811,10 @@ proc decideConvergence*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod, CF: Ca
 #M = AlefeldPotraShi() # *usually* exact
 #M = Brent()          # a bit faster, but not always convergent, as implemented (cf. RootTesting)
 proc runBisection*[T, S: SomeFloat, A: AbstractBracketing, CF: CallableFunction[T, S]](N: A, f: CF, xs: (T, T),
-                                                           state: UnivariateZeroState[T, S],
-                                                           options: UnivariateZeroOptions[T, T, S, S]) =
+                                                           state: UnivariateZeroState[
+                                                               T, S],
+                                                           options: UnivariateZeroOptions[
+                                                               T, T, S, S]) =
   let
     steps = state.steps
     fnevals = state.fnevals
@@ -775,8 +830,10 @@ proc runBisection*[T, S: SomeFloat, A: AbstractBracketing, CF: CallableFunction[
     state.message &= "Bracketing used over (" & $(xs[0]) & ", " & $(xs[1]) & "), those steps not shown. "
 
 proc runBisection*[T, S: SomeFloat, A: AbstractBracketing](N: A, f: proc(a: T): S, xs: (T, T),
-                                                           state: UnivariateZeroState[T, S],
-                                                           options: UnivariateZeroOptions[T, T, S, S]) =
+                                                           state: UnivariateZeroState[
+                                                               T, S],
+                                                           options: UnivariateZeroOptions[
+                                                               T, T, S, S]) =
   let
     steps = state.steps
     fnevals = state.fnevals
