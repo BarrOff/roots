@@ -16,7 +16,7 @@ proc secant*[T, S: SomeFloat](f: proc(x: T): S, a, b: T, atol: T = 0.0,
     rtol: T = NaN, maxevals = 100): T
 proc secant*[T, S: SomeFloat, CF: CallableFunction[T, S]](f: CF, a, b: T,
     atol: T = 0.0, rtol: T = NaN, maxevals = 100): T
-proc muller_step*[T, S: SomeFloat](a, b, c: T, fa, fb, fc: S): T
+proc mullerStep*[T, S: SomeFloat](a, b, c: T, fa, fb, fc: S): T
 
 
 proc bisection*[T, S: SomeFloat, CF: CallableFunction[float, S]](f: CF, a, b: T,
@@ -336,7 +336,7 @@ proc muller*[T, S: SomeFloat](f: proc(a: T): S, oldest, older, old: T,
   for i in 1..maxevals div 3:
     # three evaluations per iteration
     var
-      x = muller_step(xI2, xI1, xI, f(xI2), f(xI1), f(xI))
+      x = mullerStep(xI2, xI1, xI, f(xI2), f(xI1), f(xI))
 
     if classify(x) == fcNan:
       echo "The algorithm might not have converged, stopping at i=", i, abs(xI - xI1)
@@ -349,7 +349,7 @@ proc muller*[T, S: SomeFloat](f: proc(a: T): S, oldest, older, old: T,
 
   return xI
 
-proc muller_step*[T, S: SomeFloat](a, b, c: T, fa, fb, fc: S): T =
+proc mullerStep*[T, S: SomeFloat](a, b, c: T, fa, fb, fc: S): T =
   let
     q = (c - b) / (b - a)
     q2 = q * q
