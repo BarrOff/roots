@@ -10,3 +10,5 @@ import roots/derivativeFree
 export derivativeFree
 import roots/simple
 export simple
+import roots/newton
+export newton

@@ -66,6 +66,11 @@ type
     fp*, fpp*: proc(a: T): S
   ConvergenceError* = object of ValueError
 
+  # newton
+  AbstractNewtonLikeMethod* = object of AbstractUnivariateZeroMethod
+  Newton* = object of AbstractNewtonLikeMethod
+  AbstractHalleyLikeMethod* = object of AbstractUnivariateZeroMethod
+  Halley = object of AbstractHalleyLikeMethod
 
 # forward declarations
 # proc findZero*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod, CF: CallableFunction[T, S]](M: A, F: CF, state: UnivariateZeroState[T, S], l: Tracks[T, S]|NullTracks = Nulltracks())
