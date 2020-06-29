@@ -339,7 +339,8 @@ proc muller*[T, S: SomeFloat](f: proc(a: T): S, oldest, older, old: T,
       x = mullerStep(xI2, xI1, xI, f(xI2), f(xI1), f(xI))
 
     if classify(x) == fcNan:
-      echo "The algorithm might not have converged, stopping at i=", i, abs(xI - xI1)
+      write(stderr, "The algorithm might not have converged, stopping at i=" &
+          $(i) & ": " & $(abs(xI - xI1)), "\n")
       return xI
 
     (xI2, xI1, xI) = (xI1, xI, x)
