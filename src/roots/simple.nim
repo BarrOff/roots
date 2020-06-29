@@ -359,6 +359,7 @@ proc mullerStep*[T, S: SomeFloat](a, b, c: T, fa, fb, fc: S): T =
     B = (q1 + q) * fc - q1 * q1 * fb + q2 * fa
     C = q1 * fc
 
+  var
     delta = B * B - 4 * A * C
   if delta < 0:
     raise newException(RangeError, "Discriminant is negative and the function most likely has complex roots. You might want to call muller with complex input.")
