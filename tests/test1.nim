@@ -276,8 +276,15 @@ suite "float: simple Tests":
     check(z == 8.613169456441398)
     check(z1 == 0.8282194527125698)
 
+  test "default settings for muller":
+    let
+      z = muller(f, 8.0, 8.5, 9.0)
+      z1 = muller(f1, 0.0, 0.5, 1.0)
+    check(z == 8.613169456441398)
+    check(z1 == 0.8282194527125695)
+
   test "default settings for newton":
-    proc fd(x: float) : float =
+    proc fd(x: float): float =
       return exp(x) - 4 * x^3
     proc f1d(x: float): float =
       return cosh(x - 2) + 2 * x - 4.5
