@@ -67,10 +67,13 @@ type
   ConvergenceError* = object of ValueError
 
   # newton
-  AbstractNewtonLikeMethod* = object of AbstractUnivariateZeroMethod
+  AbstractNewtonLikeMethod* = object of AbstractNonBracketing
   Newton* = object of AbstractNewtonLikeMethod
-  AbstractHalleyLikeMethod* = object of AbstractUnivariateZeroMethod
-  Halley = object of AbstractHalleyLikeMethod
+  AbstractHalleyLikeMethod* = object of AbstractNonBracketing
+  Halley* = object of AbstractHalleyLikeMethod
+  Schroder* = object of AbstractHalleyLikeMethod
+  Schroeder* = Schroder
+  Schröder* = Schroder
 
 # forward declarations
 # proc findZero*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod, CF: CallableFunction[T, S]](M: A, F: CF, state: UnivariateZeroState[T, S], l: Tracks[T, S]|NullTracks = Nulltracks())
