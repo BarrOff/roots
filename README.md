@@ -1,6 +1,6 @@
 # roots
 
-This is a root finding library for [Nim](https://nim-lang.org). It is highly influenced by [Julia's](https://julialang.org) library [Roots.jl](https://github.com/JuliaMath/Roots.jl). 
+This is a root finding library for [Nim](https://nim-lang.org). It is highly influenced by [Julia's](https://julialang.org) library [Roots.jl](https://github.com/JuliaMath/Roots.jl).
 
 -----------------------------------------------------------
 
@@ -34,6 +34,10 @@ Currently implemented methods are:
 	- Thukral8
 	- Order16
 	- Thukral16
+- newton.nim:
+	- Newton
+	- Halley
+	- Schröder
 - simple.nim:
 	- bracketing
 	- secantMethod
@@ -93,6 +97,8 @@ echo findZero(f, (8, 9), FalsePosition(g: 12), verbose = true, options)
 ```
 
 **At this point, the library can not handle arrays as input. The function may not use integers in its' domain or codomain.**
+
+*Notice*: using methods from newton.nim requires the input functions to get labeled with the `{.closure.}` pragma. Examples can be found in the test file. By now I have not been able to remove this requirement. Pull requests regarding this are highly appreciated!
 
 ## To-do
 
