@@ -724,8 +724,55 @@ proc findZero*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod](fs: proc(
     else:
       return xstar
 
-# proc findZero*[Q: SomeNumber, T: SomeFloat](f: proc(a: Q): T, x0: Q, kwargs: varargs): T =
-#   return findZero(f, x0, Order0(), kwargs)                     Order0 not yet implemented
+proc findZero*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod](fs: (proc(
+    a: T): S, proc(a: T): S)|(proc(a: T): S, proc(a: T): S, proc(a: T): S),
+    x0: T|(T, T), methodes: A, tracks: Tracks[T, S]|NullTracks = NullTracks(),
+    verbose = false, kwargs: varargs[UnivariateZeroOptions[T, T, S, S]]): T =
+  let
+    F = callable_functions(fs)
+    state = initState(methodes, F, x0)
+
+  var
+    options: UnivariateZeroOptions[T, T, S, S]
+    xstar: T
+
+  if len(kwargs) == 0:
+    options = initOptions(methodes, state)
+  else:
+    options = kwargs[0]
+
+  if verbose and typeof(tracks) is NullTracks:
+    var
+      l: Tracks[T, S]
+    new(l)
+    xstar = findZero(methodes, F, options, state, l)
+
+    when l is Tracks[T, T]:
+      if verbose:
+        showTrace(methodes, state, l)
+
+    if classify(xstar) == fcNan:
+      raise newException(ConvergenceError, "Stopped at: xn = " & $(state.xn1))
+    else:
+      return xstar
+  else:
+    let
+      l = tracks
+    xstar = findZero(methodes, F, options, state, l)
+
+    when l is Tracks[T, T]:
+      if verbose:
+        showTrace(methodes, state, l)
+
+    if classify(xstar) == fcNan:
+      raise newException(ConvergenceError, "Stopped at: xn = " & $(state.xn1))
+    else:
+      return xstar
+
+
+# proc findZero*[Q: SomeNumber, T: SomeFloat](f: proc(a: Q): T, x0: Q,
+#     kwargs: varargs): T =
+#   return findZero(f, x0, Order0(), kwargs = kwargs)
 
 # In Roots.jl here would be another find_zero
 # but as updateState gets defined in the following modules
