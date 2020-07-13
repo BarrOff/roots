@@ -334,3 +334,11 @@ suite "float: Newton Tests":
     expect ConvergenceError:
       discard findZero((f1, f1prime, f1prime2), 0.0, Halley())
 
+  test "default settings for Schröder":
+    let
+      z = findZero((f, fprime, fprime2), 8.0, Schröder())
+      z1 = findZero((f1, f1prime, f1prime2), 1.0, Schröder())
+    check(z == 8.613169456441399)
+    check(z1 == 0.8282194527125695)
+    expect ConvergenceError:
+      discard findZero((f1, f1prime, f1prime2), 0.0, Schröder())
