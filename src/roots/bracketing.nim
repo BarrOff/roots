@@ -417,7 +417,8 @@ proc updateState*[T, S: SomeFloat, CF: CallableFunction[T, S]](M: Bisection |
   return
 
 proc updateState*[T, S: SomeFloat](M: Bisection | BisectionExact, fs: proc(
-    a: T): S, o: UnivariateZeroState[T, S], options: UnivariateZeroOptions[T, T, S, S]) =
+    a: T): S, o: UnivariateZeroState[T, S], options: UnivariateZeroOptions[T, T,
+        S, S]) =
   let
     y0 = o.fxn0
     ym = o.fm[0]
@@ -1704,7 +1705,8 @@ proc findBracket*[T, S: SomeFloat, A: AbstractAlefeldPotraShi or
 # FalsePosition
 
 proc updateState*[T, S: SomeFloat, CF: CallableFunction[T, S]](M: FalsePosition,
-    fs: CF, o: UnivariateZeroState[T, S], options: UnivariateZeroOptions[T, T, S, S]) =
+    fs: CF, o: UnivariateZeroState[T, S], options: UnivariateZeroOptions[T, T,
+        S, S]) =
   ## update the `state` variable to the next step of FalsePosition algorithm.
   var
     (a, b) = (o.xn0, o.xn1)
