@@ -300,3 +300,32 @@ suite "float: simple Tests":
       z1 = dfree(f1, 0.0)
     check(z == 8.613169456441398)
     check(z1 == 0.8282194527125691)
+
+suite "float: Newton Tests":
+  setup:
+    proc f(x: float): float {.closure.} =
+      return exp(x) - x^4
+    proc fprime(x: float): float {.closure.} =
+      return exp(x) - 4 * x^3
+    proc fprime2(x: float): float {.closure.} =
+      return exp(x) - 12 * x^2
+    proc f1(x: float): float {.closure.} =
+      return sinh(x - 2.0) + x^2 - 4.5 * x + 4.5
+    proc f1prime(x: float): float {.closure.} =
+      return cosh(x - 2.0) + 2 * x - 4.5
+    proc f1prime2(x: float): float {.closure.} =
+      return sinh(x - 2.0) + 2
+
+  test "default settings for Newton":
+    let
+      z = findZero((f, fprime), 8.0, Newton())
+      z1 = findZero((f1, f1prime), 1.0, Newton())
+    check(z == 8.613169456441398)
+    check(z1 == 0.8282194527125696)
+
+  test "default settings for Halley":
+    let
+      z = findZero((f, fprime, fprime2), 8.0, Halley())
+      z1 = findZero((f1, f1prime, f1prime2), 1.0, Halley())
+    check(z == 8.613169456441398)
+    check(z1 == 0.8282194527125696)
