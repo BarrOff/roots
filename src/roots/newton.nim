@@ -1,5 +1,5 @@
 import math
-import private/utils, findZero
+import findZero
 
 proc initState*[T, S: SomeFloat, CF: CallableFunction[T, S]](
   M: AbstractNewtonLikeMethod, fs: CF, x: T): UnivariateZeroState[T, S] =
