@@ -322,6 +322,8 @@ suite "float: Newton Tests":
       z1 = findZero((f1, f1prime), 1.0, Newton())
     check(z == 8.613169456441398)
     check(z1 == 0.8282194527125696)
+    expect ConvergenceError:
+      discard findZero((f1, f1prime), 0.0, Newton())
 
   test "default settings for Halley":
     let
@@ -329,3 +331,6 @@ suite "float: Newton Tests":
       z1 = findZero((f1, f1prime, f1prime2), 1.0, Halley())
     check(z == 8.613169456441398)
     check(z1 == 0.8282194527125696)
+    expect ConvergenceError:
+      discard findZero((f1, f1prime, f1prime2), 0.0, Halley())
+
