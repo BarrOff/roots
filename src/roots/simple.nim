@@ -32,7 +32,8 @@ proc bisection*[T, S: SomeFloat, CF: CallableFunction[float, S]](f: CF, a, b: T,
   var
     CT: bool
 
-  if (catol == fcZero or catol == fcNegZero) and (crtol == fcZero or crtol == fcNegZero):
+  if (catol == fcZero or catol == fcNegZero) and (crtol == fcZero or
+      crtol == fcNegZero):
     CT = true
   else:
     CT = false
@@ -42,7 +43,8 @@ proc bisection*[T, S: SomeFloat, CF: CallableFunction[float, S]](f: CF, a, b: T,
     y2 = f.f(x2)
 
   if y1 * y2 >= 0:
-    raise newException(InitialValueError, "the interval provided dows not bracket a root")
+    raise newException(InitialValueError, "the interval provided does not" &
+      " bracket a root")
 
   if sgn(y2) < 1:
     (x1, x2, y1, y2) = (x2, x1, y2, y1)
@@ -77,7 +79,8 @@ proc bisection*[T, S: SomeFloat](f: proc(x: float): S, a, b: T,
   var
     CT: bool
 
-  if (catol == fcZero or catol == fcNegZero) and (crtol == fcZero or crtol == fcNegZero):
+  if (catol == fcZero or catol == fcNegZero) and (crtol == fcZero or
+      crtol == fcNegZero):
     CT = true
   else:
     CT = false
@@ -87,7 +90,8 @@ proc bisection*[T, S: SomeFloat](f: proc(x: float): S, a, b: T,
     y2 = f(x2)
 
   if y1 * y2 >= 0:
-    raise newException(InitialValueError, "the interval provided dows not bracket a root")
+    raise newException(InitialValueError, "the interval provided dows not" &
+      " bracket a root")
 
   if sgn(y2) < 1:
     (x1, x2, y1, y2) = (x2, x1, y2, y1)
@@ -315,11 +319,11 @@ proc muller*[T, S: SomeFloat](f: proc(a: T): S, oldest, older, old: T,
     if classify(xatol) != fcNan:
       atol = xatol
     else:
-      atol = pow(max(nextafter(1.0, Inf) - 1.0, 1.0 - nextafter(1.0, 0.0)), 4 / 5)
+      atol = pow(max(nextafter(1.0, Inf) - 1.0, 1.0 - nextafter(1.0, 0.0)), 4/5)
     if classify(xrtol) != fcNan:
       rtol = xrtol
     else:
-      rtol = pow(max(nextafter(1.0, Inf) - 1.0, 1.0 - nextafter(1.0, 0.0)), 4 / 5)
+      rtol = pow(max(nextafter(1.0, Inf) - 1.0, 1.0 - nextafter(1.0, 0.0)), 4/5)
   else:
     if classify(xatol) != fcNan:
       atol = xatol
@@ -363,7 +367,9 @@ proc mullerStep*[T, S: SomeFloat](a, b, c: T, fa, fb, fc: S): T =
   var
     delta = B * B - 4 * A * C
   if delta < 0:
-    raise newException(RangeError, "Discriminant is negative and the function most likely has complex roots. You might want to call muller with complex input.")
+    raise newException(RangeError, "Discriminant is negative and " &
+      " the function most likely has complex roots. You might want to" &
+      " call muller with complex input.")
   delta = sqrt(delta)
 
   let
@@ -388,11 +394,11 @@ proc newton*[T, S: SomeFloat](f0, f1: proc(a: T): S, x0: T, xatol: T = NaN,
     if classify(xatol) != fcNan:
       atol = xatol
     else:
-      atol = pow(max(nextafter(1.0, Inf) - 1.0, 1.0 - nextafter(1.0, 0.0)), 4 / 5)
+      atol = pow(max(nextafter(1.0, Inf) - 1.0, 1.0 - nextafter(1.0, 0.0)), 4/5)
     if classify(xrtol) != fcNan:
       rtol = xrtol
     else:
-      rtol = pow(max(nextafter(1.0, Inf) - 1.0, 1.0 - nextafter(1.0, 0.0)), 4 / 5)
+      rtol = pow(max(nextafter(1.0, Inf) - 1.0, 1.0 - nextafter(1.0, 0.0)), 4/5)
   else:
     if classify(xatol) != fcNan:
       atol = xatol
@@ -434,11 +440,11 @@ proc newton*[T, S: SomeFloat, TW: TupleWrapper[T, S]](f: TW, x0: T,
     if classify(xatol) != fcNan:
       atol = xatol
     else:
-      atol = pow(max(nextafter(1.0, Inf) - 1.0, 1.0 - nextafter(1.0, 0.0)), 4 / 5)
+      atol = pow(max(nextafter(1.0, Inf) - 1.0, 1.0 - nextafter(1.0, 0.0)), 4/5)
     if classify(xrtol) != fcNan:
       rtol = xrtol
     else:
-      rtol = pow(max(nextafter(1.0, Inf) - 1.0, 1.0 - nextafter(1.0, 0.0)), 4 / 5)
+      rtol = pow(max(nextafter(1.0, Inf) - 1.0, 1.0 - nextafter(1.0, 0.0)), 4/5)
   else:
     if classify(xatol) != fcNan:
       atol = xatol

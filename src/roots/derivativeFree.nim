@@ -59,7 +59,8 @@ proc updateStateGuarded[T, S: SomeFloat, AS: AbstractSecant, AN,
     updateState(P, fs, o, options)
 
 proc initState*[T, S: SomeFloat, CF: CallableFunction[T, S],
-    AS: AbstractSecant](methodes: AS, fs: CF, x: T): UnivariateZeroState[float, S] =
+    AS: AbstractSecant](methodes: AS, fs: CF, x: T):
+      UnivariateZeroState[float, S] =
   let
     x1 = float(x)
     x0 = defaultSecantStep(x1)
@@ -161,12 +162,10 @@ proc initState*[T: SomeNumber, S: SomeFloat, AS: AbstractSecant](
 
 # Order0
 
-proc findZero*[T, S: SomeFloat, AT: Tracks[T, S] or NullTracks, CF: CallableFunction[T, S]](fs: CF, x0: T, methodes: Order0,
-                                                               tracks: AT = NullTracks(),
-                                                               verbose = false,
-                                                               kwargs: varargs[
-                                                                   UnivariateZeroOptions[
-                                                                   T, T, S, S]]): T =
+proc findZero*[T, S: SomeFloat, AT: Tracks[T, S] or NullTracks,
+    CF: CallableFunction[T, S]](fs: CF, x0: T, methodes: Order0,
+        tracks: AT = NullTracks(), verbose = false, kwargs: varargs[
+        UnivariateZeroOptions[T, T, S, S]]): T =
   let
     M = Order1()
     N = AlefeldPotraShi()
@@ -185,12 +184,9 @@ proc findZero*[T, S: SomeFloat, AT: Tracks[T, S] or NullTracks, CF: CallableFunc
     return findZero(callable_functions(fs), x0, M, N, tracks = l,
         verbose = verbose, kwargs = kwargs[0])
 
-proc findZero*[T, S: SomeFloat, AT: Tracks[T, S] or NullTracks](fs: proc(a: T): S, x0: T, methodes: Order0,
-                                                               tracks: AT = NullTracks(),
-                                                               verbose = false,
-                                                               kwargs: varargs[
-                                                                   UnivariateZeroOptions[
-                                                                   T, T, S, S]]): T =
+proc findZero*[T, S: SomeFloat, AT: Tracks[T, S] or NullTracks](
+    fs: proc(a: T): S, x0: T, methodes: Order0, tracks: AT = NullTracks(),
+        verbose = false, kwargs: varargs[UnivariateZeroOptions[T, T, S, S]]): T =
   let
     M = Order1()
     N = AlefeldPotraShi()

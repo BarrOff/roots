@@ -1827,7 +1827,8 @@ galdino[12] = proc(fa, fb, fx: float): float =
   else:
     return fa * 0.5
 
-proc galdinoReduction(methods: FalsePosition, fa, fb, fx: float): float {.inline.} =
+proc galdinoReduction(methods: FalsePosition, fa, fb, fx: float):
+    float {.inline.} =
   ## Applies galdino function set up in methods to `fa`, `fb` and `fx`
   return galdino[methods.g](fa, fb, fx)
 
@@ -1877,7 +1878,8 @@ proc findZero*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod,
 # HP-34]C(http://www.hpl.hp.com/hpjournal/pdfs/IssuePDFs/1979-12.pdf).
 # * use bracketing method if one identifed
 # * limit steps so as not too far or too near the previous one
-# * if not decreasing, use a quad step upto 4 times to bounce out of trap, if possible
+# * if not decreasing, use a quad step upto 4 times to bounce out of trap,
+#     if possible
 # First uses M, then N if bracket is identified
 proc findZero*[T, S: SomeFloat, AM: AbstractUnivariateZeroMethod,
     AN: AbstractBracketing, CF: CallableFunction[T, S]](M: AM, N: AN, F: CF,
@@ -1992,7 +1994,8 @@ proc findZero*[T, S: SomeFloat, AM: AbstractUnivariateZeroMethod,
       break
     else:
       quadCtr += 1
-      r = quadVertex(state0.xn1, state0.fxn1, state.xn1, state.fxn1, state.xn0, state.fxn0)
+      r = quadVertex(state0.xn1, state0.fxn1, state.xn1, state.fxn1, state.xn0,
+        state.fxn0)
 
       if classify(r) == fcNan or classify(r) == fcInf or classify(r) == fcNegInf:
         copyState(state, state0)

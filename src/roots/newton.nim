@@ -27,8 +27,8 @@ proc initState*[T, S: SomeFloat, CF: CallableFunction[T, S]](
   result.convergenceFailed = false
   result.message = ""
 
-proc initState2*[T, S: SomeFloat, CF: CallableFunction[T, S]](state: UnivariateZeroState[T, S],
-                                                              M: Newton, fs: CF, x: T) =
+proc initState2*[T, S: SomeFloat, CF: CallableFunction[T, S]](
+    state: UnivariateZeroState[T, S], M: Newton, fs: CF, x: T) =
   let
     x1 = x
     tmp = fDeltaX(fs, x)
