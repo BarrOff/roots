@@ -163,3 +163,9 @@ proc identifyStartingPoint*[T: SomeFloat](a, b: T, sfxs: seq[int]): T =
     p1 = p0 + (b - a) / (2 * N) * sfxs[0] * sum(sfxs[1: N - 1])
 
   return p1
+
+proc eps*[T: SomeFloat](x: T): T =
+  when sizeof(T) == 8:
+    return nextafter(1.0, 2.0) - 1.0
+  else:
+    return nextafterf(1.0, 2.0) - 1.0
