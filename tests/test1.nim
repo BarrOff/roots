@@ -342,3 +342,48 @@ suite "float: Newton Tests":
     check(z1 == 0.8282194527125695)
     expect ConvergenceError:
       discard findZero((f1, f1prime, f1prime2), 0.0, Schröder())
+
+suite "float: findZeros":
+  test "a few well-spaced zeros":
+    let
+      f = proc(x: float): float =
+        return exp(x) - pow(x, 4)
+      zs = findZeros(f, -5.0, 20.0)
+
+    check(zs.len == 3)
+
+  test "many zeros":
+    let
+      f = proc(x: float): float =
+        return sin(x * x) + cos(x) * cos(x)
+      zs = findZeros(f, 0.0, 2 * PI)
+
+    check(zs.len == 12)
+
+  test "mix of simple, non-simple zeros":
+    let
+      f = proc(x: float): float =
+        return cos(x) + cos(2 * x)
+      zs = findZeros(f, 0.0, 4 * PI)
+
+    check(zs.len == 6)
+
+  test "nearby zeros":
+    let
+      f = proc(x: float): float =
+        return (x - 0.5) * (x - 0.5001) * (x - 1)
+      zs = findZeros(f, 0.0, 2.0)
+
+    check(zs.len == 3)
+    check(zs[0] == 0.5)
+    check(zs[1] == 0.5001)
+    check(zs[2] == 1.0)
+
+  test "too hard for default":
+    let
+      f = proc(x: float): float =
+        return (x - 0.5)^2 * (x - 0.5001)^3 * (x - 4) * (x - 4.001) *
+                  (x - 4.2)^2
+      zs = findZeros(f, 0.0, 10.0, noPts = 21, xatol = 3.0002136344885295e-13)
+
+    check(zs.len == 2)
