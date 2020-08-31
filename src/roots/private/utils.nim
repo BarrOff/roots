@@ -160,7 +160,7 @@ proc identifyStartingPoint*[T: SomeFloat](a, b: T, sfxs: seq[int]): T =
   let
     N = len(sfxs) - 1
     p0 = a + (b - a) / 2
-    p1 = p0 + (b - a) / (2 * N) * sfxs[0] * sum(sfxs[1: N - 1])
+    p1 = p0 + (b - a) * float(sfxs[0] * sum(sfxs[1..N - 1]) / (2 * N))
 
   return p1
 
