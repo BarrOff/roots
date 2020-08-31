@@ -7,7 +7,6 @@ This is a root finding library for [Nim](https://nim-lang.org). It is highly inf
 
 ## Status
 
-**This library is still subject to development! Breaking API changes are highly likely!**
 The basic structure was taken from Roots.jl and reimplemented as close a possible in Nim. All honor goes to them, I merely took their code and converted it to Nim.
 As both languages handle things differently, some changes were unavoidable. An example is passing objects to functions: in Julia it is call-by-reference, whereas in Nim it is usually call-by-value. To accomodate for this, most types are ref types. Duplication of state, option and track objects it thereby avoided. To substitute for Julias [multiple dispatch](https://en.wikipedia.org/wiki/Multiple_dispatch) capabilities Generics are used.
 
@@ -43,6 +42,8 @@ Currently implemented methods are:
 	- secantMethod
 	- newton
 	- dfree
+- findZeros.nim:
+	- findZeros
 
 
 
@@ -51,6 +52,8 @@ Currently implemented methods are:
 ### Usage
 
 **The methods from simple.nim are used in a different way than those of bisection.nim and derivativeFree.nim. If you want to use them, please take a look at the code or the documentation in Roots.jl. Examples will be included here in the future.**
+
+The API tries to mimic the one from Roots.jl as close as possible. If in question, please consult their documentation.
 
 Similar to the Roots.jl way specifying the algorithm is optional. If none is given, Bisection is used.
 The chosen algorithm can be passed as the third parameter to the `findZero` function call.
@@ -73,7 +76,9 @@ echo findZero(f, (8, 9), verbose = true)
 
 When using the FalsePosition algorithm, a number has to be passed to the initialisation call.
 The number has to be an int from 1 to 12 and correspondts to the respective galdino function.
-Options can be passed to the function by giving a UnivariateZeroOptions object as a last parameter:
+
+**Notice**: passing a variable number of parameters is handled slightly different in Julia and Nim. Therefore I decided to pass them via a dedicated object type.
+The options are therefore passed to the function by giving a UnivariateZeroOptions object as a last parameter:
 
 ```nim
 import math, roots
@@ -105,7 +110,7 @@ echo findZero(f, (8, 9), FalsePosition(g: 12), verbose = true, options)
 - [x] implement basic structure in Nim
 - [x] implement basic bisection algorithm and [AlefeldPotraShi](https://dx.doi.org/10.1090/s0025-5718-1993-1192965-2)
 - [x] implement all Bracketing algorithms
-- [ ] add tests
+- [x] add tests
 - [x] implement non-bracketing methods
 - [ ] clean up code and possibly restructure
 - [ ] add documentation
