@@ -225,25 +225,28 @@ proc findZeros*[T, S: SomeFloat](f: proc(x: T): S, a, b: T, noPts: int = 12,
     cnt = 0
 
   if not(naive):
-    for i in ints:
+    while ints.len > 0:
       cnt += 1
       let
-        subNoPts = floor(noPts / pow(2.0, i.depth))
+        currentInterval = ints[high(ints)]
+        subNoPts = noPts div 2^currentInterval.depth
+      ints = ints[0..high(ints) - 1]
 
       nzs = @[]
       if subNoPts >= 2:
-        fz2(nzs, f, i.a, i.b, subNoPts, k)
+        fz2(nzs, f, currentInterval.a, currentInterval.b, subNoPts, k)
 
       if nzs.len != 0:
         let
-          azs = nzs.filter(x => notNear(x, zs, xatol, xrtol, nzs))
+          azs = nzs.filter(x => notNear(x, zs, xatol, xrtol))
         if azs.len == 0:
           continue
         zs = concat(zs, azs)
         sort(zs)
-        if i.depth > 4:
+        if currentInterval.depth > 4:
           continue
-        makeIntervals(ints, f, i.a, i.b, azs, i.depth + 1, xatol, xrtol, atol, rtol)
+        makeIntervals(ints, f, currentInterval.a, currentInterval.b, azs,
+            currentInterval.depth + 1, xatol, xrtol, atol, rtol)
 
   if zs.len <= 1:
     return zs
