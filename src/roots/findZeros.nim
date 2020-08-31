@@ -201,7 +201,6 @@ proc findZeros*[T, S: SomeFloat](f: proc(x: T): S, a, b: T, noPts: int = 12,
   # set tolerances if not specified
   let
     (fa0, fb0) = (f(a0), f(b0))
-    internXatol: T = pow(xatol, 0.8)
 
   var
     zs: seq[T] # collect zeros
@@ -210,8 +209,8 @@ proc findZeros*[T, S: SomeFloat](f: proc(x: T): S, a, b: T, noPts: int = 12,
     zs.add(a0)
   if abs(fb0) <= 8 * eps(b0):
     zs.add(b0)
-  a0 = findNonZero(f, a0, b0, internXatol, xrtol, atol, rtol)
-  b0 = findNonZero(f, b0, a0, internXatol, xrtol, atol, rtol)
+  a0 = findNonZero(f, a0, b0, xatol, xrtol, atol, rtol)
+  b0 = findNonZero(f, b0, a0, xatol, xrtol, atol, rtol)
 
   fz2(zs, f, a0, b0, noPts, k) # initial zeros
 
@@ -219,7 +218,7 @@ proc findZeros*[T, S: SomeFloat](f: proc(x: T): S, a, b: T, noPts: int = 12,
     ints: seq[Interval[T]]
 
   if not(naive) and zs.len != 0:
-    makeIntervals(ints, f, a0, b0, zs, 1, internXatol, xrtol, atol, rtol)
+    makeIntervals(ints, f, a0, b0, zs, 1, xatol, xrtol, atol, rtol)
 
   var
     nzs: seq[T]
