@@ -71,7 +71,7 @@ proc fz2[T, S: SomeFloat](zs: var seq[S], f: proc(x: T): S, a, b: T,
           if not(classify(rt) == fcNan) and (u < rt) and (rt <= v):
             zs.add(rt)
         except:
-          echo "caught exception"
+          discard
 
       u = v
       foundBisectionZero = false
@@ -114,17 +114,17 @@ proc findNonZero[T, S: SomeFloat](f: proc(x: T): S, a, barrier, xatol, xrtol: T,
     sign = -1
 
   var
-    x = a + pow(2, ctr) * sign * xtol
+    x = a + T(2^ctr * sign) * xtol
 
   while not(nonZero(f(x), x, atol, rtol)):
     ctr += 1
-    x += pow(2, ctr) * sign * xtol
+    x += T(2^ctr * sign) * xtol
 
     if (sign > 0 and x > barrier) or (sign < 0 and x < barrier):
-      return T(sqrt(-1))
+      return T(0.0 / 0.0)
 
     if ctr > 100:
-      return T(sqrt(-1))
+      return T(0.0 / 0.0)
 
   return x
 
@@ -151,7 +151,7 @@ proc makeIntervals[T, S: SomeFloat](ints: var seq[Interval[T]], f: proc(
     if classify(vl) == fcNan:
       continue
 
-    ints.add(Interval(ur, vl, depth))
+    ints.add(Interval[T](a: ur, b: vl, depth: depth))
 
 # adjust what we mean by x1 ~ x2 for purposes of adding a new zero
 proc approxClose[T: SomeFloat](z1, z2, xatol, xrtol: T): bool =
@@ -166,7 +166,7 @@ proc notNear[T: SomeFloat](proposed: T, xs: seq[T], xatol, xrtol: T): bool =
   if n <= 1:
     return true
 
-  let
+  var
     ind = n + 1
 
   for i, rt in xs:
@@ -189,8 +189,9 @@ proc notNear[T: SomeFloat](proposed: T, xs: seq[T], xatol, xrtol: T): bool =
   return true
 
 proc findZeros*[T, S: SomeFloat](f: proc(x: T): S, a, b: T, noPts: int = 12,
-    k: int = 8, naive: bool = false, xatol: T = eps(a), xrtol: T = eps(a),
-        atol: S = eps(float(1.0)), rtol: S = eps(float(1.0))): seq[T] =
+    k: int = 8, naive: bool = false, xatol: T = pow(eps(a), 0.8),
+        xrtol: T = eps(a), atol: S = eps(float(1.0)), rtol: S = eps(float(
+            1.0))): seq[T] =
   var
     (a0, b0) = (float(a), float(b))
   if classify(a0) == fcNegInf:
