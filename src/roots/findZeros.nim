@@ -19,17 +19,17 @@ type
 # for a bracket so we oversample our intervals looking for brackets
 # * assumes f(a) *not* a zero
 
-proc fz2*[T, S: SomeFloat](zs: var seq[S], f: proc(x: T): S, a, b: T,
+proc fz2[T, S: SomeFloat](zs: var seq[S], f: proc(x: T): S, a, b: T,
     no_pts: int, k: int = 4)
 
-proc fz*[T, S: SomeFloat](f: proc(x: T): S, a, b: T, no_pts: int,
+proc fz[T, S: SomeFloat](f: proc(x: T): S, a, b: T, no_pts: int,
     k: int = 4): seq[S] =
   var
     zs: seq[S]
   fz2(zs, f, a, b, no_pts, k)
   return zs
 
-proc fz2*[T, S: SomeFloat](zs: var seq[S], f: proc(x: T): S, a, b: T,
+proc fz2[T, S: SomeFloat](zs: var seq[S], f: proc(x: T): S, a, b: T,
     no_pts: int, k: int = 4) =
   let
     n = (no_pts - 1) * k + 1
@@ -82,7 +82,7 @@ proc fz2*[T, S: SomeFloat](zs: var seq[S], f: proc(x: T): S, a, b: T,
     sort(zs)
 
 # check if f(a) is non zero using tolerances max(atol, eps()), rtol
-proc nonZero*[T, S: SomeFloat](fa: S, a: T, atol, rtol: S): bool =
+proc nonZero[T, S: SomeFloat](fa: S, a: T, atol, rtol: S): bool =
   when sizeof(T) == 8:
     abs(fa) >= max(atol, max(abs(a) * rtol, (nextafter(1.0, 2.0) - 1.0)))
   else:
@@ -90,7 +90,7 @@ proc nonZero*[T, S: SomeFloat](fa: S, a: T, atol, rtol: S): bool =
 
 # After splitting by zeros we have intervals (zm, zn) this is used to shrink
 # to (zm+, zn-) where both are non-zeros, as defined above
-proc findNonZero*[T, S: SomeFloat](f: proc(x: T): S, a, barrier, xatol, xrtol: T,
+proc findNonZero[T, S: SomeFloat](f: proc(x: T): S, a, barrier, xatol, xrtol: T,
                                       atol, rtol: S): T =
   when sizeof(T) == 8:
     let
@@ -124,8 +124,8 @@ proc findNonZero*[T, S: SomeFloat](f: proc(x: T): S, a, barrier, xatol, xrtol: T
 
 # split a < z1 < z2 < ... < zn < b into intervals (a+,z1-), (z1+, z2-), ...
 # where possible; push! onto ints
-proc makeIntervals*[T, S: SomeFloat](ints: var seq[Interval[T]], f: proc(
-    x: T): S, a, b: T, zs: seq[T], depth, xatol, xrtol: T, atol, rtol: S) =
+proc makeIntervals[T, S: SomeFloat](ints: var seq[Interval[T]], f: proc(
+    x: T): S, a, b: T, zs: seq[T], depth: int, xatol, xrtol: T, atol, rtol: S) =
   var
     pts = newSeq[T](2 + zs.len)
 
@@ -148,13 +148,13 @@ proc makeIntervals*[T, S: SomeFloat](ints: var seq[Interval[T]], f: proc(
     ints.add(Interval(ur, vl, depth))
 
 # adjust what we mean by x1 ~ x2 for purposes of adding a new zero
-proc approxClose*[T: SomeFloat](z1, z2, xatol, xrtol: T): bool =
+proc approxClose[T: SomeFloat](z1, z2, xatol, xrtol: T): bool =
   let
     tol = max(sqrt(xatol), max(abs(z1), abs(z2)) * sqrt(xrtol))
   return abs(z1 - z2) < tol
 
 # is proposed not near xs? (false and we add proposed)
-proc notNear*[T: SomeFloat](proposed: T, xs: seq[T], xatol, xrtol: T): bool =
+proc notNear[T: SomeFloat](proposed: T, xs: seq[T], xatol, xrtol: T): bool =
   let
     n = xs.len
   if n <= 1:
