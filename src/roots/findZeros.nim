@@ -33,14 +33,20 @@ proc fz2[T, S: SomeFloat](zs: var seq[S], f: proc(x: T): S, a, b: T,
     no_pts: int, k: int = 4) =
   let
     n = (no_pts - 1) * k + 1
-    l = (b - a) / n
+    l = (b - a) / T(n)
   var
     pts = newSeq[S](n)
     fs = newSeq[S](n)
-    sfs = newSeq[S](n)
+    sfs = newSeq[int](n)
 
-  for i in 0..<n:
-    pts[i] = a + i * l
+  pts[0] = a
+  pts[high(pts)] = b
+  fs[0] = f(pts[0])
+  fs[high(fs)] = f(pts[high(pts)])
+  sfs[0] = sgn(fs[0])
+  sfs[high(sfs)] = sgn(fs[high(fs)])
+  for i in 1..<high(pts):
+    pts[i] = pts[i - 1] + l
     fs[i] = f(pts[i])
     sfs[i] = sgn(fs[i])
 
@@ -50,8 +56,8 @@ proc fz2[T, S: SomeFloat](zs: var seq[S], f: proc(x: T): S, a, b: T,
 
   for i, x in pts:
     let
-      q = (i - 1) div k
-      r = (i - 1) mod k
+      q = i div k
+      r = i mod k
     var
       p1, rt: T
 
@@ -70,7 +76,7 @@ proc fz2[T, S: SomeFloat](zs: var seq[S], f: proc(x: T): S, a, b: T,
       u = v
       foundBisectionZero = false
 
-    if i < n:
+    if i < n - 1:
       if (classify(fs[i + 1]) == fcNegZero) or (classify(fs[i + 1]) == fcZero):
         foundBisectionZero = true # kinda
         zs.add(pts[i + 1])
@@ -168,15 +174,15 @@ proc notNear[T: SomeFloat](proposed: T, xs: seq[T], xatol, xrtol: T): bool =
       ind = i
       break
 
-  if ind > 1: # xs[ind-1] <= propose < xs[ind]
+  if ind > 0: # xs[ind-1] <= propose < xs[ind]
     let
-      rt = xs[ind-2]
+      rt = xs[ind-1]
     if approxClose(proposed, rt, xatol, xrtol):
       return false
 
-  if ind <= n: # value to right
+  if ind < n: # value to right
     let
-      rt = xs[ind - 1]
+      rt = xs[ind]
     if approxClose(proposed, rt, xatol, xrtol):
       return false
 
