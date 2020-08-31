@@ -12,3 +12,5 @@ import roots/simple
 export simple
 import roots/newton
 export newton
+import roots/findZeros
+export findZeros
