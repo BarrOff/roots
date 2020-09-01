@@ -1,5 +1,49 @@
+## ======
+## newton
+## ======
+##
+## Classical derivative-based, iterative, root-finding algorithms
+##
+## If `ri = f^(i-1)/f^(i)`, then these have an update step `xn - delta` where:
+##
+## * Newton: `delta = r1`  # order 2 if simple root (multiplicity 1)
+## * Halley: `delta = 2*r2/(2r2 - r1) * r1` # order 3 if simple root
+## * Schroder: `delta = r2  / (r2 - r1) * r1`  # order 2
+## * Thukral(3): `delta =  (-2*r3)*(r2 - r1)/(r1^2 - 3*r1*r3 + 2*r2*r3) * r1` # order 3
+## * Thukral(4): `delta =  3*r1*r2*r4*(r1^2 - 3*r1*r3 + 2*r2*r3)/(-r1^3*r2 + 4*r1^2*r2*r4 + 3*r1^2*r3*r4 - 12*r1*r2*r3*r4 + 6*r2^2*r3*r4)` # order 4
+##
+## The latter two come from
+## `Thukral <http://article.sapub.org/10.5923.j.ajcam.20170702.05.html>`_.
+## They are not implemented.
+
+
 import math
 import findZero
+
+## Newton
+## ------
+## Implements `Newton's method <http://tinyurl.com/b4d7vls>`_:
+## `xᵢ₊₁ =  xᵢ - f(xᵢ)/f'(xᵢ)`. This is a quadratically convergent method
+## requiring one derivative. Two function calls per step.
+##
+## Example
+## ```nim
+## findZero((sin,cos), 3.0, Newton())
+## ```
+##
+## If function evaluations are expensive one can pass in a function which
+## returns `(f, f/f')` as follows
+##
+## ```nim
+## findZero(x -> (sin(x), sin(x)/cos(x)), 3.0, Newton())
+## ```
+##
+## This can be advantageous if the derivative is easily computed from the
+## value of f, but otherwise would be expensive to compute.
+##
+## The error, `eᵢ = xᵢ - α`, can be expressed as `eᵢ₊₁ = f[xᵢ,xᵢ,α]/(2f[xᵢ,xᵢ])eᵢ²`
+## (Sidi, Unified treatment of regula falsi, Newton-Raphson, secant, and
+## Steffensen methods for nonlinear equations).
 
 proc initState*[T, S: SomeFloat, CF: CallableFunction[T, S]](
   M: AbstractNewtonLikeMethod, fs: CF, x: T): UnivariateZeroState[T, S] =
@@ -68,10 +112,42 @@ proc updateState*[T, S: SomeFloat, CF: CallableFunction[T, S]](M: Newton,
 
 proc newton2*[T, S: SomeFloat](f, fp: proc(f1: T): S, x0: T|(T, T),
     kwargs: varargs[UnivariateZeroOptions[T, T, S, S]]): T =
+  ## Implementation of Newton's method: `x_n1 = x_n - f(x_n)/ f'(x_n)`
+  ## 
+  ## Arguments:
+  ## 
+  ## * `f::Function` -- function to find zero of
+  ## 
+  ## * `fp::Function` -- the derivative of `f`.
+  ## 
+  ## * `x0::Number` -- initial guess.
   return findZero(callableFunctions((f, fp)), x0, Newton(), kwargs = kwargs)
 
 
-# Halley
+## Halley
+## ------
+## Implements `Halley's method <http://tinyurl.com/yd83eytb>`_,
+## `xᵢ₊₁ = xᵢ - (f/f')(xᵢ) * (1 - (f/f')(xᵢ) * (f''/f')(xᵢ) * 1/2)^(-1)`
+## This method is cubically converging, but requires more function calls per
+## step (3) than other methods.
+##
+## Example
+## ```nim
+## find_zero((sin, cos, x=>-sin(x)), 3.0, Halley())
+## ```
+##
+## If function evaluations are expensive one can pass in a function which
+## returns `(f, f/f',f'/f'')` as follows
+##
+## ```nim
+## find_zero(x => (sin(x), sin(x)/cos(x), -cos(x)/sin(x)), 3.0, Halley())
+## ```
+##
+## This can be advantageous if the derivatives are easily computed from
+## the value of `f`, but otherwise would be expensive to compute.
+##
+## The error, `eᵢ = xᵢ - α`, satisfies
+## `eᵢ₊₁ ≈ -(2f'⋅f''' -3⋅(f'')²)/(12⋅(f'')²) ⋅ eᵢ³` (all evaluated at `α`).
 
 proc initState*[T, S: SomeFloat, CF: CallableFunction[T, S]](
   methods: AbstractHalleyLikeMethod, fs: CF, x: T): UnivariateZeroState[T, S] =
@@ -132,10 +208,57 @@ proc updateState*[T, S: SomeFloat, CF: CallableFunction[T, S]](methods: Halley,
 
 proc halley*[T, S: SomeFloat](f, fp, fpp: proc(f1: T): S, x0: T|(T, T),
     kwargs: varargs[UnivariateZeroOptions[T, T, S, S]]): T =
+  ## Implementation of Halley's method.
+  ##
+  ## Arguments:
+  ##
+  ## * `f::Function` -- function to find zero of
+  ##
+  ## * `fp::Function` -- derivative of `f`.
+  ##
+  ## * `fpp:Function` -- second derivative of `f`.
+  ##
+  ## * `x0::Number` -- initial guess
   return findZero(callableFunctions((f, fp, fpp)), x0, Halley(),
       kwargs = kwargs)
 
-# Schroder
+## Schröder
+## ========
+##
+## Schröder's method, like Halley's method, utilizes `f`, `f'`, and
+## `f''`. Unlike Halley it is quadratically converging, but this is
+## independent of the multiplicity of the zero (cf. Schröder, E. "Über
+## unendlich viele Algorithmen zur Auflösung der Gleichungen."
+## Math. Ann. 2, 317-365, 1870;
+## `mathworld <http://mathworld.wolfram.com/SchroedersMethod.html>`_).
+## Schröder's method applies Newton's method to `f/f'`, a function with all
+## simple zeros.
+##
+##
+## Example
+## ```nim
+## let
+##   m = 2
+##   fx = x => (cos(x)-x)^m
+##   fpx = x => (-x + cos(x))*(-2*sin(x) - 2)
+##   fppx = x => 2*((x - cos(x))*cos(x) + (sin(x) + 1)^2)
+## findZero((f, fp, fpp), PI/4, Halley())    # 14 steps
+## findZero((f, fp, fpp), 1.0, Schroder())    # 3 steps
+## ```
+##
+## (Whereas, when `m=1`, Halley is 2 steps to Schröder's 3.)
+##
+## If function evaluations are expensive one can pass in a function which
+## returns `(f, f/f',f'/f'')` as follows
+##
+## ```nim
+## findZero(x => (sin(x), sin(x)/cos(x), -cos(x)/sin(x)), 3.0, Schroder())
+## ```
+##
+## This can be advantageous if the derivatives are easily computed from
+## the value of `f`, but otherwise would be expensive to compute.
+##
+## The error, `eᵢ = xᵢ - α`, is the same as `Newton` with `f` replaced by `f/f'`.
 
 proc updateState*[T, S: SomeFloat, CF: CallableFunction[T, S]](
   methods: Schroder, fs: CF, o: UnivariateZeroState[T, S],
