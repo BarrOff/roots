@@ -16,7 +16,6 @@ type
   AbstractNonSecant* = object of AbstractNonBracketing
 
   # types needed for bracketing
-type
   InitialValueError* = object of ValueError
   AbstractBisection* = object of AbstractBracketing
   Bisection* = object of AbstractBisection
@@ -27,7 +26,25 @@ type
   Brent* = object of AbstractBracketing
   FalsePosition* = object of AbstractBisection
     ## This algorithm needs an int field to store the chosen galdino function
-    g*: int ## g stores the chosen galdino function
+    ## `g` stores the chosen galdino function
+    g*: int
+
+  # types needed for derivativefree methods
+  Order0* = object of AbstractSecant
+  Secant* = object of AbstractSecant
+  Order1* = Secant
+  Order1B* = object of AbstractSecant
+  King* = object of AbstractSecant
+  Order2* = object of AbstractSecant
+  Steffensen* = object of AbstractSecant
+  Order2B* = object of AbstractSecant
+  Esser* = object of AbstractSecant
+  Order5* = object of AbstractSecant
+  KumarSinghAkanksha* = object of AbstractSecant
+  Order8* = object of AbstractSecant
+  Thukral8* = object of AbstractSecant
+  Order16* = object of AbstractSecant
+  Thukral16* = object of AbstractSecant
 
   # States
   AbstractUnivariateZeroState* = ref object of RootObj

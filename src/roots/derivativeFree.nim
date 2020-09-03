@@ -7,22 +7,6 @@
 import math
 import private/utils, findZero
 
-type
-  Order0* = object of AbstractSecant
-  Secant* = object of AbstractSecant
-  Order1* = Secant
-  Order1B* = object of AbstractSecant
-  King* = object of AbstractSecant
-  Order2* = object of AbstractSecant
-  Steffensen* = object of AbstractSecant
-  Order2B* = object of AbstractSecant
-  Esser* = object of AbstractSecant
-  Order5* = object of AbstractSecant
-  KumarSinghAkanksha* = object of AbstractSecant
-  Order8* = object of AbstractSecant
-  Thukral8* = object of AbstractSecant
-  Order16* = object of AbstractSecant
-  Thukral16* = object of AbstractSecant
 
 # forward declarations
 proc updateState*[T, S: SomeFloat, CF: CallableFunction[T, S]](methodes: Order1,
