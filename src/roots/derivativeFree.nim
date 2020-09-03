@@ -1,3 +1,9 @@
+## ==============
+## derivativeFree
+## ==============
+##
+## Many derivative free methods of different orders
+
 import math
 import private/utils, findZero
 
@@ -34,6 +40,37 @@ proc updateState*[T, S: SomeFloat](methodes: King, fs: proc(a: T): S,
     o: UnivariateZeroState[T, S], options: UnivariateZeroOptions[T, T, S, S])
 proc steffStep*[T, S: SomeFloat](M: Order5|Order8|Order16, x: T, fx: S): T
 
+## Guard against non-robust algorithms
+## -----------------------------------
+##
+## By default, we do this by deciding if we
+## should take a secant step instead of the algorithm. For example, for
+## Steffensen which is quadratically convergent and the Secant method
+## which is only superlinear,
+## the error, `e_{n+1} = x_{n+1} - α`, may be smaller after a secant
+## step than a Steffensen step. (It is only once `x_n` is close enough
+## to αthat the method is quadratically convergent.
+## The Steffensen error is::
+##
+##   Δn+1 = f[x,x+fx, α]/f[x, x+fx] * (1 - f[x, α]) (x-α)^2 ≈ f''/(2f') * ( 1 + f') Δn^2
+##
+## The Secant error is::
+##
+##   Δn+1 = f[x,x_{-1},α] / f[x,x_{-1}] * (x-α) * (x_{-1} - α)
+##        ≈  f''/(2f')  Δn ⋅ Δn-1
+##
+## The ratio is `≈ (1 + f')(Δn / Δn-1)`.
+## It seems reasonable, that a Steffensen step is preferred when
+## the ratio satisfies `-1 < (1+f') ⋅ Δn /Δn-1 < 1`.
+## We could use `f' ~ fp = (fx1-fx0)/(x1-x0)`; but our proxy for
+## `Δn/Δn-1` is problematic, as we don't know α, and using `xn-x_{n-1}`
+## can be an issue when only x1 and not `x0` is specified. This needs
+## working around.
+##
+## Instead, as Steffensen is related to Newton as much as
+## `(f(x+fx) - fx)/fx ≈ f'(x)`, we take a Steffensen step if `\|fx\|`
+## is small enough. For this we use `\|fx\| <= x/1000`; which
+## seems to work reasonably well over several different test cases.
 proc doGuardedStep[T, S: SomeFloat](M: AbstractSecant, o: UnivariateZeroState[T,
     S]): bool {.inline.} =
   let
@@ -45,6 +82,7 @@ proc updateStateGuarded[T, S: SomeFloat, AS: AbstractSecant, AN,
   AP: AbstractUnivariateZeroMethod, CF: CallableFunction[T, S]](M: AS, N: AN,
     P: AP, fs: CF, o: UnivariateZeroState[T, S], options: UnivariateZeroOptions[
     T, T, S, S]) =
+  ## check if we should guard against step for method M; call N if yes, P if not
   if doGuardedStep(M, o):
     updateState(N, fs, o, options)
   else:
@@ -53,6 +91,7 @@ proc updateStateGuarded[T, S: SomeFloat, AS: AbstractSecant, AN,
 proc updateStateGuarded[T, S: SomeFloat, AS: AbstractSecant, AN,
   AP: AbstractUnivariateZeroMethod](M: AS, N: AN, P: AP, fs: proc(a: T): S,
     o: UnivariateZeroState[T, S], options: UnivariateZeroOptions[T, T, S, S]) =
+  ## check if we should guard against step for method M; call N if yes, P if not
   if doGuardedStep(M, o):
     updateState(N, fs, o, options)
   else:
@@ -160,7 +199,26 @@ proc initState*[T: SomeNumber, S: SomeFloat, AS: AbstractSecant](
   return
 
 
-# Order0
+## Order0()
+## --------
+##
+## The `Order0` method is engineered to be a more robust, though possibly
+## slower, alternative to the other derivative-free root-finding
+## methods. The implementation roughly follows the algorithm described in
+## *Personal Calculator Has Key to Solve Any Equation f(x) = 0*, the
+## SOLVE button from the
+## `HP-34C <http://www.hpl.hp.com/hpjournal/pdfs/IssuePDFs/1979-12.pdf>`_.
+## The basic idea is to use a secant step. If along the way a bracket is
+## found, switch to bisection, using `AlefeldPotraShi`.  If the secant
+## step fails to decrease the function value, a quadratic step is used up
+## to 4 times.
+##
+## This is not really 0-order: the secant method has order
+## 1.6... `Wikipedia <https://en.wikipedia.org/wiki/Secant_method#Comparison_with_other_root-finding_methods>`_
+## and the bracketing method has order
+## 1.6180... `Wikipedia <http://www.ams.org/journals/mcom/1993-61-204/S0025-5718-1993-1192965-2/S0025-5718-1993-1192965-2.pdf>`_
+## so for reasonable starting points, this algorithm should be
+## superlinear, and relatively robust to non-reasonable starting points.
 
 proc findZero*[T, S: SomeFloat, AT: Tracks[T, S] or NullTracks,
     CF: CallableFunction[T, S]](fs: CF, x0: T, methodes: Order0,
@@ -206,7 +264,18 @@ proc findZero*[T, S: SomeFloat, AT: Tracks[T, S] or NullTracks](
         verbose = verbose, kwargs = kwargs[0])
 
 
-# Secant
+## `Secant <https://en.wikipedia.org/wiki/Secant_method>`_
+## -------------------------------------------------------
+##
+## The `Order1()` method is an alias for `Secant`. It specifies the
+## `secant method <https://en.wikipedia.org/wiki/Secant_method>`_.
+## This method keeps two values in its state, `x_n` and `x_n1`. The
+## updated point is the intersection point of x axis with the secant line
+## formed from the two points. The secant method uses 1 function
+## evaluation per step and has order `(1+sqrt(5))/2`.
+##
+## The error, `eᵢ = xᵢ - α`, satisfies
+## `eᵢ₊₂ = f[xᵢ₊₁,xᵢ,α] / f[xᵢ₊₁,xᵢ] * (xᵢ₊₁-α) * (xᵢ - α)`.
 
 proc updateState*[T, S: SomeFloat, CF: CallableFunction[T, S]](methodes: Order1,
     fs: CF, o: UnivariateZeroState[T, S], options: UnivariateZeroOptions[T, T,
@@ -1003,10 +1072,10 @@ proc updateState*[T, S: SomeFloat](M: Thukral16|Order16, fs: proc(a: T): S,
   return
 
 
-##################################################
-# some means of guarding against large fx when taking a secant step
-# TODO: rework this
-proc steffStep*[T, S: SomeFloat](M: Order5|Order8|Order16, x: T, fx: S): T =
+proc steffStep[T, S: SomeFloat](M: Order5|Order8|Order16, x: T, fx: S): T =
+  ## some means of guarding against large fx when taking a secant step
+  ##
+  ## **TODO**: rework this
   let
     (xbar, fxbar) = (x, fx)
   when sizeof(T) == 8:
