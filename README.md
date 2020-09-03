@@ -8,7 +8,15 @@ This is a root finding library for [Nim](https://nim-lang.org). It is highly inf
 ## Status
 
 The basic structure was taken from Roots.jl and reimplemented as close a possible in Nim. All honor goes to them, I merely took their code and converted it to Nim.
-As both languages handle things differently, some changes were unavoidable. An example is passing objects to functions: in Julia it is call-by-reference, whereas in Nim it is usually call-by-value. To accomodate for this, most types are ref types. Duplication of state, option and track objects it thereby avoided. To substitute for Julias [multiple dispatch](https://en.wikipedia.org/wiki/Multiple_dispatch) capabilities Generics are used.
+As both languages handle things differently, some changes were unavoidable.
+An example is passing objects to functions: in Julia it is call-by-reference, whereas in Nim it is usually call-by-value.
+To accomodate for this, most types are ref types.
+Duplication of state, option and track objects it thereby avoided.
+To substitute for Julias [multiple dispatch](https://en.wikipedia.org/wiki/Multiple_dispatch) capabilities Generics are used.
+
+Compared to the Roots.jl, only the Matlab-like functions are missing.
+However, as those really are just convenience functions, there is currently no plan to implement them.
+Right now the focus is on documentation, tests and bug fixes.
 
 Currently implemented methods are:
 
