@@ -1,3 +1,12 @@
+## ======
+## simple
+## ======
+##
+## some simpler (and faster) implementations for root finding
+##
+## These avoid the setup costs of the `findZero` method, so should be faster
+## though they will take similar number of function calls.
+
 import math
 import private/utils, findZero, bracketing
 
@@ -18,9 +27,34 @@ proc secant*[T, S: SomeFloat, CF: CallableFunction[T, S]](f: CF, a, b: T,
     atol: T = 0.0, rtol: T = NaN, maxevals = 100): T
 proc mullerStep*[T, S: SomeFloat](a, b, c: T, fa, fb, fc: S): T
 
+## Bisection
+## ---------
+## Essentially from
+## `Jason Merrill <https://gist.github.com/jwmerrill/9012954>`_
+## cf. `here <http://squishythinking.com/2014/02/22/bisecting-floats/>`_
+## This also borrows a trick from
+## `here <https://discourse.julialang.org/t/simple-and-fast-bisection/14886>`_
+## where we keep `x1` so that `y1` is negative, and `x2` so that `y2` is
+## positive this allows the use of signbit over `y1*y2 < 0` which avoid < and
+## a multiplication this has a small, but noticeable impact on performance.
 
 proc bisection*[T, S: SomeFloat, CF: CallableFunction[float, S]](f: CF, a, b: T,
     xatol: float = 0.0, xrtol: float = 0.0): float =
+  ## Performs bisection method to find a zero of a continuous
+  ## function.
+  ##
+  ## It is assumed that `(a,b)` is a bracket, that is, the function has
+  ## different signs at `a` and `b`. The interval `(a,b)` is converted to
+  ## floating point and shrunk when `a` or `b` is infinite. The function f may
+  ## be infinite for the typical case. If `f` is not continuous, the algorithm
+  ## may find jumping points over the x axis, not just zeros.
+  ##
+  ## If non-trivial tolerances are specified, the process will terminate
+  ## when the bracket `(a,b)` satisfies `isapprox(a, b, atol=xatol,
+  ## rtol=xrtol)`. For zero tolerances, the default, for `float64`, `float32`,
+  ## values, the process will terminate at a value `x` with
+  ## `f(x)=0` or `f(x)*f(prevfloat(x)) < 0 ` or `f(x) * f(nextfloat(x)) <
+  ## 0`. For other number types, the A42 method is used.
   var
     (x1, x2) = adjustBracket((float(a), float(b)))
   let
@@ -133,10 +167,30 @@ proc hasConverged[S: SomeFloat](Val: bool, x1, x2, m: float, ym: S, atol,
 
 
 
-# secantMethod
+## secantMethod
+## ------------
+##
+## Perform secant method to solve `f(x) = 0`.
+##
+## The secant method is an iterative method with update step
+## given by `b - fb/m` where m is the slope of the secant line between
+## `(a,fa)` and `(b,fb).`
+##
+## The inital values can be specified as a pair of 2, as in `(a,b)` or
+## `[a,b]`, or as a single value, in which case a value of `b` is chosen.
+##
+## The algorithm returns m when `abs(fm) <= max(atol, abs(m) * rtol)`.
+## If this doesn't occur before `maxevals` steps or the algorithm
+## encounters an issue, a value of `NaN` is returned. If too many steps
+## are taken, the current value is checked to see if there is a sign
+## change for neighboring floating point values.
+##
+## The `Order1` method for `findZero` also implements the secant
+## method. This one will be faster, as there are fewer setup costs.
 
 proc secantMethod*[T, S: SomeFloat, CF: CallableFunction[T, S]](f: CF, xs: T|(T,
     T), atol: float = 0.0, rtol: float = NaN, maxevals = 100): T =
+  ## Perform secant method to solve `f(x) = 0`.
   var
     a, b, h: T
 
@@ -307,10 +361,33 @@ proc secant*[T, S: SomeFloat](f: proc(x: T): S, a, b: T, atol: T = 0.0,
 
 
 
-# muller
+## Muller
+## ------
+##
+## *Muller’s method* generalizes the secant method, but uses quadratic
+## interpolation among three points instead of linear interpolation between two.
+## Solving for the zeros of the quadratic allows the method to find complex
+## pairs of roots.
+## Given three previous guesses for the root `xᵢ₋₂`, `xᵢ₋₁`, `xᵢ`, and the
+## values of the polynomial `f` at those points, the next approximation `xᵢ₊₁`
+## is produced.
+##
+## Excerpt and the algorithm taken from
+##
+## ``W.H. Press, S.A. Teukolsky, W.T. Vetterling and B.P. Flannery
+## *Numerical Recipes in C*, Cambridge University Press (2002), p. 371``
+##
+## Convergence here is decided by `xᵢ₊₁ ≈ xᵢ` using the tolerances specified,
+## which both default to `eps(one(typeof(abs(xᵢ))))^4/5` in the appropriate
+## units. Each iteration performs three evaluations of `f`. The first method
+## picks two remaining points at random in relative proximity of `xᵢ`.
+##
+## Note that the method may return complex result even for real intial values
+## as this depends on the function.
 
 proc muller*[T, S: SomeFloat](f: proc(a: T): S, oldest, older, old: T,
     xatol: T = NaN, xrtol: T = NaN, maxevals: int = 300): T =
+  ## Perform Muller´s method to solve `f(x) = 0`.
   var
     (xI2, xI1, xI) = (oldest, older, old)
     atol, rtol: T
@@ -382,7 +459,19 @@ proc mullerStep*[T, S: SomeFloat](a, b, c: T, fa, fb, fc: S): T =
 
   return T(c - (c - b) * 2 * C / den)
 
-# newton
+## Newton's method
+## ---------------
+##
+## Function may be passed in as a tuple (f, f') *or* as function which returns
+## (f,f/f').
+##
+## Note: unlike the call `newton(f, fp, x0)`--which dispatches to a method of
+## `find_zero`, these two interfaces will specialize on the function that is
+## passed in. This means, these functions will be faster for subsequent calls,
+## but may be slower for an initial call.
+##
+## Convergence here is decided by x_n ≈ x_{n-1} using the tolerances specified,
+## which both default to `eps(T)^4/5` in the appropriate units.
 
 proc newton*[T, S: SomeFloat](f0, f1: proc(a: T): S, x0: T, xatol: T = NaN,
     xrtol: T = NaN, maxevals = 100): T =
@@ -478,7 +567,36 @@ proc newton*[T, S: SomeFloat, TW: TupleWrapper[T, S]](f: TW, x0: T,
 
 
 
-# dfree
+## dfree
+## -----
+##
+## This is basically Order0(), but with different, default, tolerances employed
+## It takes more function calls, but works harder to find exact zeros
+## where exact means either iszero(fx), adjacent floats have sign change, or
+## abs(fxn) <= 8 eps(xn)
+##
+## A more robust secant method implementation
+##
+## Solve for `f(x) = 0` using an alogorithm from *Personal Calculator Has Key
+## to Solve Any Equation `f(x) = 0`*, the SOLVE button from the
+## `HP-34C <http://www.hpl.hp.com/hpjournal/pdfs/IssuePDFs/1979-12.pdf>`_.
+##
+## This is also implemented as the `Order0` method for `find_zero`.
+##
+## The inital values can be specified as a pair of two values, as in
+## `(a,b)` or `[a,b]`, or as a single value, in which case a value of `b`
+## is computed, possibly from `fb`.  The basic idea is to follow the
+## secant method to convergence unless:
+##
+## * a bracket is found, in which case bisection is used;
+## * the secant method is not converging, in which case a few steps of a
+##   quadratic method are used to see if that improves matters.
+##
+## Convergence occurs when `f(m) == 0`, there is a sign change between
+## `m` and an adjacent floating point value, or `f(m) <= 2^3*eps(m)`.
+##
+## A value of `NaN` is returned if the algorithm takes too many steps
+## before identifying a zero.
 
 proc dfree*[T, S: SomeFloat](f: proc(a: T): S, xs: T|(T, T)): T =
 
