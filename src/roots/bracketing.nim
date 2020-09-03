@@ -1,3 +1,30 @@
+## ==========
+## bracketing
+## ==========
+##
+## Bisection
+## ---------
+##
+## If possible, will use the bisection method over `float64` values. The
+## bisection method starts with a bracketing interval `[a,b]` and splits
+## it into two intervals `[a,c]` and `[c,b]`, If `c` is not a zero, then
+## one of these two will be a bracketing interval and the process
+## continues. The computation of `c` is done by `middle`, which
+## reinterprets floating point values as unsigned integers and splits
+## there. It was contributed  by
+## `Jason Merrill <https://gist.github.com/jwmerrill/9012954>`_. 
+## This method avoids floating point issues and when the
+## tolerances are set to zero (the default) guarantees a "best" solution
+## (one where a zero is found or the bracketing interval is of the type
+## `[a, nextfloat(a)]`).
+##
+## When tolerances are given, this algorithm terminates when the midpoint
+## is approximately equal to an endpoint using absolute tolerance `xatol`
+## and relative tolerance `xrtol`.
+##
+## When a zero tolerance is given and the values are not `Float64`
+## values, this will call the `A42` method.
+
 import math, tables
 import private/utils, findZero
 
@@ -60,9 +87,8 @@ proc adjustBracket*[T: SomeFloat](x0: (T, T)): (T, T) =
 
 proc initState*[T, S: SomeFloat, A: AbstractBisection, CF: CallableFunction[T,
     S]](meth: A, fs: CF, x: (T, T)): UnivariateZeroState[T, S] =
-  ## Checks the initial bracketing values for different sign
-  ## of their function values. Returns InitialValueError if
-  ## same sign, otherwise returns initial state reference.
+  ## In `initState` the bracketing interval is left as `(a,b)` with
+  ## `a`,`b` both finite and of the same sign
   let
     (x0, x1) = adjustBracket(x)
     fx0 = fs.f(x0)
@@ -75,9 +101,8 @@ proc initState*[T, S: SomeFloat, A: AbstractBisection, CF: CallableFunction[T,
 
 proc initState*[T, S: SomeFloat, A: AbstractBisection](meth: A, fs: proc(
     a: T): S, x: (T, T)): UnivariateZeroState[T, S] =
-  ## Checks the initial bracketing values for different sign
-  ## of their function values. Returns InitialValueError if
-  ## same sign, otherwise returns initial state reference.
+  ## In `initState` the bracketing interval is left as `(a,b)` with
+  ## `a`,`b` both finite and of the same sign
   let
     (x0, x1) = adjustBracket(x)
     fx0 = fs(x0)
@@ -90,7 +115,9 @@ proc initState*[T, S: SomeFloat, A: AbstractBisection](meth: A, fs: proc(
 
 proc initState*[T, S: SomeFloat, A: AbstractBisection, CF: CallableFunction[T,
     S]](meth: A, fs: CF, xs, fxs: (T, T)): UnivariateZeroState[T, S] =
-  # Creates state reference using `xs`and `fxs`.
+  ## assume `xs`, `fxs`, have all been checked so that we have a bracket
+  ## gives an  entry for the case where the endpoints are expensive to compute
+  ## as requested in issue #156 by @greimel
   let
     (x0, x1) = xs
     (fx0, fx1) = fxs
@@ -116,7 +143,9 @@ proc initState*[T, S: SomeFloat, A: AbstractBisection, CF: CallableFunction[T,
 
 proc initState*[T, S: SomeFloat, A: AbstractBisection](meth: A, fs: proc(
     a: T): S, xs, fxs: (T, T)): UnivariateZeroState[T, S] =
-  # Creates state reference using `xs`and `fxs`.
+  ## assume `xs`, `fxs`, have all been checked so that we have a bracket
+  ## gives an  entry for the case where the endpoints are expensive to compute
+  ## as requested in issue #156 by @greimel
   let
     (x0, x1) = xs
     (fx0, fx1) = fxs
@@ -265,8 +294,16 @@ proc initState*[T, S: SomeFloat, A: AbstractBisection](
 
 proc defaultTolerances*[Ti, Si: SomeFloat](M: Bisection | BisectionExact,
     T: typedesc[Ti], S: typedesc[Si]): (Ti, Ti, Si, Si, int, int, bool) =
-  ## creates a tuple of default option values for
-  ## `Bisection` and `BisectionExact` algorithms.
+  ## for Bisection, the defaults are zero tolerances and `strict=true`
+  ##
+  ## For `Bisection` (or `BisectionExact`), when the `x` values are of type
+  ## `Float64`, `Float32` the default tolerances are zero and there is no limit
+  ## on the number of iterations or function evalutions. In this case, the
+  ## algorithm is guaranteed to converge to an exact zero, or a point where
+  ## the function changes sign at one of the answer's adjacent floating
+  ## point values.
+  ##
+  ## For other types,  the `A42` method (with its tolerances) is used.
   let
     xatol = Ti(0)
     xrtol = Ti(0)
@@ -279,6 +316,13 @@ proc defaultTolerances*[Ti, Si: SomeFloat](M: Bisection | BisectionExact,
   return((xatol, xrtol, atol, rtol, maxevals, maxfnevals, strict))
 
 proc middle*[T: SomeNumber](x, y: T): T =
+  ## find middle of (a,b) with convention that:
+  ##
+  ## * if `a`, `b` infinite, they are made finite
+  ## * if `a`,`b` of different signs, middle is 0
+  ## * middle falls back to `a/2 + b/2`, but
+  ##   for `float64` values, middle is over the
+  ##   reinterpreted unsigned integer.
   var
     a, b: T
   if classify(x) == fcInf or classify(x) == fcNegInf:
@@ -305,29 +349,46 @@ proc middle2*[T: SomeInteger](a, b: T): float =
   return 0.5 * float(a) + 0.5 * float(b)
 
 proc middle2*[T: float32, S: uint32](t: typedesc[T], s: typedesc[S], a, b: T): T =
+  ## Use the usual float rules for combining non-finite numbers
+  ## do division over unsigned integers with bit shift
   let
     aInt = cast[S](a)
     bInt = cast[S](b)
     mid = (aInt + bInt) shr 1
 
+  # reinterpret in original floating point
   return T(sgn(a + b)) * cast[T](mid)
 
 proc middle2*[T: float, S: uint](t: typedesc[T], s: typedesc[S], a, b: T): T =
+  ## Use the usual float rules for combining non-finite numbers
+  ## do division over unsigned integers with bit shift
   let
     aInt = cast[S](a)
     bInt = cast[S](b)
     mid = (aInt + bInt) shr 1
 
+  # reinterpret in original floating point
   return T(sgn(a + b)) * cast[T](mid)
 
 proc middle2*(a, b: float): float =
+  ## find middle assuming `a`,`b` same sign, finite
+  ## Alternative "mean" definition that operates on the binary representation
+  ## of a float. Using this definition, bisection will never take more than
+  ## 64 steps (over float64)
   return middle2(float, uint, a, b)
 
 proc middle2*(a, b: float32): float32 =
+  ## find middle assuming `a`,`b` same sign, finite
+  ## Alternative "mean" definition that operates on the binary representation
+  ## of a float. Using this definition, bisection will never take more than
+  ## 64 steps (over float64)
   return middle2(float32, uint32, a, b)
 
 proc assessConvergence*[T, S: SomeFloat](M: Bisection,
     state: UnivariateZeroState[T, S], options: UnivariateZeroOptions[T, T, S, S]): bool =
+  ## the method converges,
+  ## as we bound between `x0`, `nextfloat(x0)` is not measured by `eps()`, but
+  ## `eps(x0)`
   var
     M: BisectionExact
   if assessConvergence(M, state, options):
@@ -362,6 +423,7 @@ proc assessConvergence*[T, S: SomeFloat](M: Bisection,
 
 proc assessConvergence*[T, S](M: BisectionExact, state: UnivariateZeroState[T,
     S], options: UnivariateZeroOptions[T, T, S, S]): bool =
+  ## for exact convergence, we can skip some steps
   if state.xConverged:
     return true
 
@@ -446,6 +508,9 @@ proc findZero*[T, S: SomeFloat, AT: Tracks[T, S] or NullTracks,
     CF: CallableFunction[T, S]](fs: CF, x0: (T, T), methods: Bisection,
     tracks: AT = NullTracks(), verbose = false, kwargs: varargs[
     UnivariateZeroOptions[T, T, S, S]]): float =
+  ## Bisection has special cases
+  ## for zero tolerance, we have either `BisectionExact` or `A42` methods
+  ## for non-zero tolerances, we have use thegeneral Bisection method
   let
     x = adjustBracket(x0)
     F = callable_functions(fs)
@@ -459,6 +524,7 @@ proc findZero*[T, S: SomeFloat, AT: Tracks[T, S] or NullTracks,
   else:
     options = kwargs[0]
 
+  # check if tolerances are exactly 0
   let
     iszeroTol = options.xabstol == 0.0 and options.xreltol == 0.0 and
         options.abstol == 0.0 and options.reltol == 0.0
@@ -500,6 +566,9 @@ proc findZero*[T, S: SomeFloat, AT: Tracks[T, S] or NullTracks,
 proc findZero*[T, S: SomeFloat, AT: Tracks[T, S] or NullTracks](fs: proc (
     a: T): S, x0: (T, T), methods: Bisection, tracks: AT = NullTracks(),
     verbose = false, kwargs: varargs[UnivariateZeroOptions[T, T, S, S]]): float =
+  ## Bisection has special cases
+  ## for zero tolerance, we have either `BisectionExact` or `A42` methods
+  ## for non-zero tolerances, we have use thegeneral Bisection method
 
   let
     x = adjustBracket(x0)
@@ -602,22 +671,37 @@ proc findZero*[T, S: SomeNumber, SI: proc(a: SomeInteger): SomeNumber|proc(
 
   return float(NaN)
 
+## A42
+## ----
+##
+## a provided interval `[a,b]`, without requiring derivatives. It is based
+## on algorithm 4.2 described in: G. E. Alefeld, F. A. Potra, and Y. Shi,
+## "Algorithm 748: enclosing zeros of continuous functions," ACM
+## Trans. Math. Softw. 21, 327–344 (1995),
+## DOI: `10.1145/210089.210111 <https://doi.org/10.1145/210089.210111>`_.
+## Originally by John Travers.
+
 proc isBracket[T: SomeNumber](fa, fb: T): bool {.inline.} =
   return sgn(fa) * sgn(fb) < 0
 
 proc fAB[T, S: SomeFloat](a, b: T, fa, fb: S): float {.inline.} =
+  ## `f[a,` b]
   return float(fb - fa) / float(b - a)
 
 proc fABD[T, S: SomeFloat](a, b, d: T, fa, fb, fd: S): float {.inline.} =
+  ## `f[a,b,d]`
   let
     fabi = fAB(a, b, fa, fb)
     fbdi = fAB(b, d, fb, fd)
   return (fbdi - fabi) / (d - a)
 
 proc secantStep[T, S: SomeFloat](a, b: T, fa, fb: S): T {.inline.} =
+  ## a bit better than `a - fa/f_ab`
   return a - T(fa * (b - a) / (fb - fa))
 
 proc bracket[T, S: SomeFloat](a, b, c: T, fa, fb, fc: S): (T, T, T, S, S, S) =
+  ## assume `fc != 0`
+  ## return `a1,b1,d` with `a < a1 <  < b1 < b, d` not there
   if isBracket(fa, fc):
     return (a, c, b, fa, fc, fb)
   else:
@@ -625,6 +709,7 @@ proc bracket[T, S: SomeFloat](a, b, c: T, fa, fb, fc: S): (T, T, T, S, S, S) =
 
 proc takeA42Step[T, S: SomeFloat](a, b, d, ee: T, fa, fb, fd, fe: S,
     delta: T = T(0.0)): T =
+  ## Cubic if possible, if not, quadratic(3)
   var
     r = ipzero(a, b, d, ee, fa, fb, fd, fe, delta)
 
@@ -653,6 +738,8 @@ proc ipzero[T, S: SomeFloat](a, b, c, d: T, fa, fb, fc, fd: S, delta: T = T(0.0)
 
 proc newtonQuadratic[T, S: SomeFloat, R: SomeInteger](a, b, d: T, fa, fb, fd: S,
     k: R, delta: T = T(0.0)): T =
+  ## return `c` in `(a+delta, b-delta)`
+  ## adds part of `bracket` from paper with `delta`
   let
     A = fABD(a, b, d, fa, fb, fd)
 
@@ -768,6 +855,7 @@ proc initState*[T, S: SomeFloat, A: AbstractAlefeldPotraShi](M: A, f: proc(
 proc initState*[T, S: SomeFloat, A: AbstractAlefeldPotraShi,
     CF: CallableFunction[T, S]](state: UnivariateZeroState[T, S], aaps: A,
     f: CF, xs: (T, T), computeFx = true) =
+  ## secant step, then bracket for initial setup
   var
     a, b, c, d, ee: T
     fa, fb, fc, fd, fe: S
@@ -810,6 +898,7 @@ proc initState*[T, S: SomeFloat, A: AbstractAlefeldPotraShi,
 proc initState*[T, S: SomeFloat, A: AbstractAlefeldPotraShi](
   state: UnivariateZeroState[T, S], aaps: A, f: proc(a: T): S, xs: (T, T),
     computeFx = true) =
+  ## secant step, then bracket for initial setup
   var
     a, b, c, d, ee: T
     fa, fb, fc, fd, fe: S
@@ -853,8 +942,9 @@ proc initState*[T, S: SomeFloat, A: AbstractAlefeldPotraShi](
 
 proc defaultTolerances*(M: AbstractAlefeldPotraShi, T, S: typedesc): (T, T, S,
     S, int, int, bool) =
-  ## creates a tuple of default option values for
-  ## `AbstractAlefeldPotraShi` algorithms.
+  ## The default tolerances for Alefeld, Potra, and Shi methods are
+  ## `xatol=zero(T)`, `xrtol=eps(T)/2`, `atol= zero(S), and rtol=zero(S)`, with
+  ## appropriate units; `maxevals=45`, `maxfnevals = Inf`; and `strict=true`.
   let
     xatol = T(0.0)
     atol = S(0.0)
@@ -874,6 +964,7 @@ proc defaultTolerances*(M: AbstractAlefeldPotraShi, T, S: typedesc): (T, T, S,
 
 proc checkZero*[T, S: SomeFloat, A: AbstractBracketing](M: A,
     state: UnivariateZeroState[T, S], c: T, fc: S): bool =
+  ## convergence is much different here
   if classify(c) == fcNan:
     state.stopped = true
     state.xstar = c
@@ -948,6 +1039,7 @@ proc assessConvergence*[T, S: SomeFloat, A: AbstractAlefeldPotraShi](M: A,
 
 proc logStep*[T, S: SomeFloat, A: AbstractAlefeldPotraShi](l: Tracks[T, S],
     M: A, state: UnivariateZeroState[T, S]) =
+  ## initial step, needs to log a,b,d
   let
     a = state.xn0
     b = state.xn1
@@ -976,6 +1068,7 @@ proc logStep*[T, S: SomeFloat, A: AbstractAlefeldPotraShi](l: Tracks[T, S],
 
 proc updateState[T, S: SomeFloat, CF: CallableFunction[T, S]](M: A42, f: CF,
     state: UnivariateZeroState[T, S], options: UnivariateZeroOptions[T, T, S, S]) =
+  ## Main algorithm for A42 method
   var
     a = state.xn0
     b = state.xn1
@@ -1071,6 +1164,7 @@ proc updateState[T, S: SomeFloat, CF: CallableFunction[T, S]](M: A42, f: CF,
   return
 proc updateState[T, S: SomeFloat](M: A42, f: proc(a: T): S,
     state: UnivariateZeroState[T, S], options: UnivariateZeroOptions[T, T, S, S]) =
+  ## Main algorithm for A42 method
   var
     a = state.xn0
     b = state.xn1
@@ -1166,9 +1260,18 @@ proc updateState[T, S: SomeFloat](M: A42, f: proc(a: T): S,
   return
 
 
+## AlefeldPotraShi
+## ---------------
+##
+## Follows algorithm in "ON ENCLOSING SIMPLE ROOTS OF NONLINEAR
+## EQUATIONS", by Alefeld, Potra, Shi; DOI:
+## `10.1090/S0025-5718-1993-1192965-2 <https://doi.org/10.1090/S0025-5718-1993-1192965-2>`_.
+## Efficiency is 1.618. Less efficient, but can be faster than the `A42` method.
+## Originally by John Travers.
 proc updateState[T, S: SomeFloat, CF: CallableFunction[T, S]](
   M: AlefeldPotraShi, f: CF, state: UnivariateZeroState[T, S],
     options: UnivariateZeroOptions[T, T, S, S]) =
+  ## 3, maybe 4, functions calls per step
 
   var
     a = state.xn0
@@ -1329,12 +1432,13 @@ proc runBisection*[T, S](f: proc(a: T): S, xs: (T, T),
 
   runBisection(M, f, xs, state, options)
 
-# Roots.Brent()
-
-# An implementation of
-# [Brent's](https://en.wikipedia.org/wiki/Brent%27s_method) (or Brent-Dekker) method.
-# This method uses a choice of inverse quadratic interpolation or a secant
-# step, falling back on bisection if necessary.
+## Brent
+## -----
+##
+## An implementation of
+## `Brent's <https://en.wikipedia.org/wiki/Brent%27s_method>`_ (or Brent-Dekker)
+## method. This method uses a choice of inverse quadratic interpolation or a
+## secant step, falling back on bisection if necessary.
 
 proc logStep*[T, S: SomeFloat](l: Tracks[T, S], M: Brent,
     state: UnivariateZeroState[T, S]) =
@@ -1684,6 +1788,14 @@ proc updateState*[T, S: SomeFloat](M: Brent, f: proc(a: T): S,
 proc findBracket*[T, S: SomeFloat, A: AbstractAlefeldPotraShi or
     BisectionExact](f: proc(a: T): S, x0: (T, T), methods: A = A42(),
     kwargs: varargs[UnivariateZeroOptions[T, T, S, S]]): (T, (T, T), bool) =
+  ## For bracketing methods returns an approximate root, the last bracketing interval used, and a flag indicating if an exact zero was found as a named tuple.
+  ##
+  ## With the default tolerances, one  of these should be the case:
+  ## `exact` is `true` (indicating termination  of the algorithm due to an exact
+  ## zero  being identified) or the length of `bracket` is less or equal than
+  ## `2eps(maximum(abs.(bracket)))`. In the `BisectionExact` case, the 2 could
+  ## be replaced by 1, as the bracket, `(a,b)` will satisfy `nextfloat(a) == b`;
+  ## the Alefeld,  Potra, and Shi algorithms don't quite have that promise.
   let
     x = adjustBracket(x0)
     F = callableFunctions(f)
@@ -1702,7 +1814,30 @@ proc findBracket*[T, S: SomeFloat, A: AbstractAlefeldPotraShi or
   return (state.xstar, (state.xn0, state.xn1), state.fxstar == S(0))
 
 
-# FalsePosition
+## FalsePosition
+## -------------
+##
+## Use the
+## `false position <https://en.wikipedia.org/wiki/False_position_method>`_
+## method to find a zero for the function `f` within the bracketing interval
+## `[a,b]`.
+##
+## The false position method is a modified bisection method, where the
+## midpoint between `[a_k, b_k]` is chosen to be the intersection point
+## of the secant line with the x axis, and not the average between the
+## two values.
+##
+## To speed up convergence for concave functions, this algorithm
+## implements the 12 reduction factors of Galdino (*A family of regula
+## falsi root-finding methods*). These are specified by number, as in
+## `FalsePosition(2)` or by one of three names `FalsePosition(:pegasus)`,
+## `FalsePosition(:illinois)`, or `FalsePosition(:anderson_bjork)` (the
+## default). The default choice has generally better performance than the
+## others, though there are exceptions.
+##
+## For some problems, the number of function calls can be greater than
+## for the `bisection64` method, but generally this algorithm will make
+## fewer function calls.
 
 proc updateState*[T, S: SomeFloat, CF: CallableFunction[T, S]](M: FalsePosition,
     fs: CF, o: UnivariateZeroState[T, S], options: UnivariateZeroOptions[T, T,
@@ -1787,6 +1922,7 @@ template defaultTolerances*[T, S: SomeFloat](M: FalsePosition|Brent,
 
 var
   galdino = initTable[int, proc(a, b, c: float): float]()
+  ## the 12 reduction factors offered by Galadino
 
 galdino[1] = proc(fa, fb, fx: float): float =
   return fa * fb / (fb + fx)
@@ -1830,6 +1966,8 @@ galdino[12] = proc(fa, fb, fx: float): float =
 proc galdinoReduction(methods: FalsePosition, fa, fb, fx: float):
     float {.inline.} =
   ## Applies galdino function set up in methods to `fa`, `fb` and `fx`
+  ##
+  ## from `Chris Elrod <https://raw.githubusercontent.com/chriselrod/AsymptoticPosteriors.jl/master/src/false_position.jl>`
   return galdino[methods.g](fa, fb, fx)
 
 
