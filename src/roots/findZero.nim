@@ -1,3 +1,9 @@
+## ========
+## findZero
+## ========
+##
+## Framework for setting up an iterative problem for finding a zero
+
 import math, sequtils
 import private/utils
 
@@ -48,9 +54,9 @@ type
     maxfnevals*: int
     strict*: bool
 
-  # Tracks (for logging actual steps)
-  # when no logging this should get optimized out to avoid a branch
   AbstractTracks* = ref object of Rootobj
+    ## Tracks (for logging actual steps)
+    ## when no logging this should get optimized out to avoid a branch
   NullTracks* = ref object of AbstractTracks
   Tracks*[T, S: SomeFloat] = ref object of AbstractTracks
     xs*: seq[T]
@@ -90,7 +96,7 @@ proc runBisection*[T, S: SomeFloat, A: AbstractBracketing](N: A,
                         S], options: UnivariateZeroOptions[T, T, S, S])
 
 
-## Start library functions
+# Start library functions
 
 
 proc incfn*[T, S: SomeFloat](o: UnivariateZeroState[T, S], k = 1) =
@@ -98,10 +104,9 @@ proc incfn*[T, S: SomeFloat](o: UnivariateZeroState[T, S], k = 1) =
 proc incsteps*[T, S: SomeFloat](o: UnivariateZeroState[T, S], k = 1) =
   o.steps += k
 
-# initState resembles the init_state function of Julia
-# initialize state for most methods
 proc initState*[T, S: SomeFloat, A: AbstractNonSecant, CF: CallableFunction[T,
     S]](methodes: A, fs: CF, x: T): UnivariateZeroState[T, S] =
+  ## initialize state for most methods
   let
     x1 = x
     fnevals = 1
@@ -118,6 +123,7 @@ proc initState*[T, S: SomeFloat, A: AbstractNonSecant, CF: CallableFunction[T,
 
 proc initState*[T, S: SomeFloat, A: AbstractNonSecant](methodes: A, fs: proc(
     a: T): S, x: SomeNumber): UnivariateZeroState[T, S] =
+  ## initialize state for most methods
   let
     x1 = x
     fnevals = 1
@@ -132,21 +138,11 @@ proc initState*[T, S: SomeFloat, A: AbstractNonSecant](methodes: A, fs: proc(
   result.fConverged = false
   result.convergenceFailed = false
 
-## This function is used to reset the state to an initial value
-## As initializing a state is somewhat costly, this can be useful when many
-## function calls would be used.
-## An example usage, might be:
-# M = Order1()
-# state = Roots.init_state(M, f1, 0.9)
-# options = Roots.init_options(M, state)
-# out = zeros(Float64, n)
-# for (i,x0) in enumerate(linspace(0.9, 1.0, n))
-#    Roots.init_state!(state, M, f1, x0)
-#    out[i] = find_zero(M, f1, options, state)
-# end
-# init_state has a method call variant
 proc initState*[T, S: SomeFloat](state: UnivariateZeroState[T, S], x1, x0: T,
     m: seq[T], y1, y0: S, fm: seq[S]) =
+  ## This function is used to reset the state to an initial value
+  ## As initializing a state is somewhat costly, this can be useful when many
+  ## function calls would be used.
   state.xn1 = x1
   state.xn0 = x0
   state.m = m
@@ -217,16 +213,7 @@ proc copyState*[T, S: SomeNumber](dst, src: UnivariateZeroState[T, S]) =
   dst.message = src.message
 
 
-#     default_tolerances(Method, [T], [S])
-
-# The default tolerances for most methods are `xatol=eps(T)`,
-# `xrtol=eps(T)`, `atol=4eps(S)`, and `rtol=4eps(S)`, with the proper
-# units (absolute tolerances have the units of `x` and `f(x)`; relative
-# tolerances are unitless). For `Complex{T}` values, `T` is used.
-
-# The number of iterations is limited by `maxevals=40`, the number of
-# function evaluations is not capped, due to `maxfnevals=typemax(Int)`,
-# and `strict=false`.
+# default_tolerances(Method, [T], [S])
 
 template defaultTolerances*(M: AbstractUnivariateZeroMethod): (float, float,
     float, float, int, int, bool) =
@@ -234,6 +221,14 @@ template defaultTolerances*(M: AbstractUnivariateZeroMethod): (float, float,
 
 proc defaultTolerances*(M: AbstractNonBracketing, T, S: typedesc): (T, T, S, S,
     int, int, bool) =
+  ##  The default tolerances for most methods are `xatol=eps(T)`,
+  ##  `xrtol=eps(T)`, `atol=4eps(S)`, and `rtol=4eps(S)`, with the proper
+  ##  units (absolute tolerances have the units of `x` and `f(x)`; relative
+  ##  tolerances are unitless). For `Complex{T}` values, `T` is used.
+  ##
+  ##  The number of iterations is limited by `maxevals=40`, the number of
+  ##  function evaluations is not capped, due to `maxfnevals=high(int)`,
+  ##  and `strict=false`.
   when sizeof(T) == 8:
     let
       xatol = nextafter(1.0, 2.0) - 1.0
@@ -259,7 +254,6 @@ proc defaultTolerances*(M: AbstractNonBracketing, T, S: typedesc): (T, T, S, S,
 
   return (xatol, xrtol, atol, rtol, maxevals, maxfnevals, strict)
 
-# represents the init_options function of Julia
 proc initOptions*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod](M: A,
     state: UnivariateZeroState[T, S]): UnivariateZeroOptions[T, T, S, S] =
   let
@@ -274,10 +268,9 @@ proc initOptions*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod](M: A,
   result.maxfnevals = defs[5]
   result.strict = defs[6]
 
-# represents the init_options! function of Julia
-# reset options to default values
 proc initOptions2*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod](
   options: UnivariateZeroOptions[T, T, S, S], M: A) =
+  ## reset options to default values
   let
     defs = defaultTolerances(M, T, S)
 
@@ -326,8 +319,8 @@ proc showTracks*[T, S: SomeFloat, A: AbstractNonBracketing](
 
 
 # CallableFunction procs
-## Return f, f/f'
 proc fDeltaX*[T, S: SomeFloat](F: DerivativeFree[T, S], x: T): S =
+  ## Return f, f/f'
   return F.f(x)
 
 proc fDeltaX*[T, S: SomeFloat](F: FirstDerivative[T, S]|SecondDerivative[T, S],
@@ -350,7 +343,6 @@ proc fDDeltaX*[T, S: SomeFloat](F: SecondDerivative[T, S], x: T): (S, S, S) =
 
   return (fx, fx / fp, fp / fpp)
 
-# represents the _callable_function function of Julia
 proc callableFunctions*[T, S: SomeFloat, CF: CallableFunction[T, S]](
     fs: CF): CF =
   return fs
@@ -377,9 +369,9 @@ proc callableFunctions*[T, S](fs: (proc(a: T): S, proc(a: T): S, proc(
 
 
 
-## Assess convergence
 proc isFApprox0*[T: SomeFloat](
     fa, a, atol, rtol: T, relaxed: bool): bool {.inline.} =
+  ## Assess convergence
   let
     aa = abs(a)
     afa = abs(fa)
@@ -390,6 +382,7 @@ proc isFApprox0*[T: SomeFloat](
   return afa < tol
 
 proc isFApprox0*[T: SomeFloat](fa, a, atol, rtol: T): bool {.inline.} =
+  ## Assess convergence
   let
     aa = abs(a)
     afa = abs(fa)
@@ -397,31 +390,27 @@ proc isFApprox0*[T: SomeFloat](fa, a, atol, rtol: T): bool {.inline.} =
 
   return afa < tol
 
-# roots.assess_convergence(method, state, options)
-#
-# Assess if algorithm has converged.
-#
-# If alogrithm hasn't converged returns `false`.
-#
-# If algorithm has stopped or converged, return `true` and sets one of
-# `state.stopped`, `state.xConverged`,  `state.fConverged`, or
-# `state.convergenceFailed`; as well, a message may be set.
-#
-# * `state.xConverged = true` if `abs(xn1 - xn0) <
-# max(xatol, max(abs(xn1), abs(xn0)) * xrtol)`
-#
-# * `state.fConverged = true` if  `|f(xn1)| < max(atol, |xn1|*rtol)`
-#
-# * `state.convergenceFailed = true` if xn1 or fxn1 is `NaN` or an infinity
-#
-# * `state.stopped = true` if the number of steps exceed `maxevals` or the
-# number of function calls exceeds `maxfnevals`.
-#
-# In `findZero`, stopped values (and xConverged) are checked for convergence
-# with a relaxed tolerance.
 proc assessConvergence*[T, S: SomeFloat](
     methodes: bool, state: UnivariateZeroState[T, S],
     options: UnivariateZeroOptions[T, T, S, S]): bool =
+  ## Assess if algorithm has converged.
+  ##
+  ## If alogrithm hasn't converged returns `false`.
+  ##
+  ## If algorithm has stopped or converged, return `true` and sets one of
+  ## `state.stopped`, `state.xConverged`,  `state.fConverged`, or
+  ## `state.convergenceFailed`; as well, a message may be set.
+  ##
+  ## * `state.xConverged = true` if `abs(xn1 - xn0) <
+  ##   max(xatol, max(abs(xn1), abs(xn0)) * xrtol)`
+  ## * `state.fConverged = true` if  `|f(xn1)| < max(atol, |xn1|*rtol)`
+  ## * `state.convergenceFailed = true` if `xn1` or `fxn1` is `NaN` or an
+  ##   infinity
+  ## * `state.stopped = true` if the number of steps exceed `maxevals` or the
+  ##   number of function calls exceeds `maxfnevals`.
+  ##
+  ## In `findZero`, stopped values (and xConverged) are checked for convergence
+  ## with a relaxed tolerance.
   let
     xn0 = state.xn0
     xn1 = state.xn1
@@ -536,11 +525,26 @@ proc showTrace*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod](methodes: A,
 
 
 
-# find_zero(fs, x0, method; kwargs...)
+## findZero
+## --------
+##
+## Interface to one of several methods for find zeros of a univariate function.
+##
+## Optional arguments (tolerances, limit evaluations, tracing)
+##
+## * `xatol` - absolute tolerance for `x` values. Passed to
+##   `isapprox(x_n, x_{n-1})`
+## * `xrtol` - relative tolerance for `x` values. Passed to
+##   `isapprox(x_n, x_{n-1})`
+## * `atol`  - absolute tolerance for `f(x)` values.
+## * `rtol`  - relative tolerance for `f(x)` values.
+## * `maxevals`   - limit on maximum number of iterations
+## * `maxfnevals` - limit on maximum number of function evaluations
+## * `strict` - if `false` (the default), when the algorithm stops, possible
+##   zeros are checked with a relaxed tolerance
+## * `verbose` - if `true` a trace of the algorithm will be shown on
+##   successful completion.
 
-# from bracketing import findZero
-
-# Interface to one of several methods for find zeros of a univariate function.
 proc findZero*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod,
     B: AbstractBracketing, CF: CallableFunction[T, S]](fs: CF, x0: T|(T, T),
     methodes: A, N: B, tracks: Tracks[T, S]|NullTracks = NullTracks(),
@@ -804,11 +808,11 @@ proc findZero*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod](M: A, F: proc(
   findZero(M, F, options, state, l)
   return
 
-# state has stopped, this identifies if it has converged
 proc decideConvergence*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod,
                         CF: CallableFunction[T, S]](M: A, F: CF,
                             state: UnivariateZeroState[T, S],
                             options: UnivariateZeroOptions[T, T, S, S]): T =
+  ## state has stopped, this identifies if it has converged
   let
     xn1 = state.xstar
     fxn1 = state.fxstar
