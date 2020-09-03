@@ -38,7 +38,7 @@ proc updateState*[T, S: SomeFloat, CF: CallableFunction[T, S]](methodes: King,
     fs: CF, o: UnivariateZeroState[T, S], options: UnivariateZeroOptions[T, T, S, S])
 proc updateState*[T, S: SomeFloat](methodes: King, fs: proc(a: T): S,
     o: UnivariateZeroState[T, S], options: UnivariateZeroOptions[T, T, S, S])
-proc steffStep*[T, S: SomeFloat](M: Order5|Order8|Order16, x: T, fx: S): T
+proc steffStep[T, S: SomeFloat](M: Order5|Order8|Order16, x: T, fx: S): T
 
 ## Guard against non-robust algorithms
 ## -----------------------------------

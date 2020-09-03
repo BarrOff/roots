@@ -962,7 +962,7 @@ proc defaultTolerances*(M: AbstractAlefeldPotraShi, T, S: typedesc): (T, T, S,
 
   return (xatol, xrtol, atol, rtol, maxevals, maxfnevals, strict)
 
-proc checkZero*[T, S: SomeFloat, A: AbstractBracketing](M: A,
+proc checkZero[T, S: SomeFloat, A: AbstractBracketing](M: A,
     state: UnivariateZeroState[T, S], c: T, fc: S): bool =
   ## convergence is much different here
   if classify(c) == fcNan:

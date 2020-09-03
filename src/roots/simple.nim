@@ -19,11 +19,11 @@ let
   eps32 = 8 * max(nextafterf(1.0, Inf) - 1.0, 1.0 - nextafterf(1.0, 0.0))
 
 # forward declarations
-proc hasConverged*[S: SomeFloat](Val: bool, x1, x2, m: float, ym: S, atol,
+proc hasConverged[S: SomeFloat](Val: bool, x1, x2, m: float, ym: S, atol,
     rtol: float): bool
-proc secant*[T, S: SomeFloat](f: proc(x: T): S, a, b: T, atol: T = 0.0,
+proc secant[T, S: SomeFloat](f: proc(x: T): S, a, b: T, atol: T = 0.0,
     rtol: T = NaN, maxevals = 100): T
-proc secant*[T, S: SomeFloat, CF: CallableFunction[T, S]](f: CF, a, b: T,
+proc secant[T, S: SomeFloat, CF: CallableFunction[T, S]](f: CF, a, b: T,
     atol: T = 0.0, rtol: T = NaN, maxevals = 100): T
 proc mullerStep*[T, S: SomeFloat](a, b, c: T, fa, fb, fc: S): T
 
@@ -245,7 +245,7 @@ proc secantMethod*[T, S: SomeFloat](f: proc(x: T): S, xs: T|(T, T),
 
   return secant(f, a, b, atol, rtol, maxevals)
 
-proc secant*[T, S: SomeFloat, CF: CallableFunction[T, S]](f: CF, a, b: T,
+proc secant[T, S: SomeFloat, CF: CallableFunction[T, S]](f: CF, a, b: T,
     atol: T = 0.0, rtol: T = NaN, maxevals = 100): T =
   let
     nan = (0 * a) / (0 * a)
@@ -302,7 +302,7 @@ proc secant*[T, S: SomeFloat, CF: CallableFunction[T, S]](f: CF, a, b: T,
 
   return nan
 
-proc secant*[T, S: SomeFloat](f: proc(x: T): S, a, b: T, atol: T = 0.0,
+proc secant[T, S: SomeFloat](f: proc(x: T): S, a, b: T, atol: T = 0.0,
     rtol: T = NaN, maxevals = 100): T =
   let
     nan = (0 * a) / (0 * a)
