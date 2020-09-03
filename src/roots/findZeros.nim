@@ -103,7 +103,6 @@ proc fz2[T, S: SomeFloat](zs: var seq[T], f: proc(x: T): S, a, b: T,
 
   for i, x in pts:
     let
-      q = i div k
       r = i mod k
     var
       p1, rt: T
