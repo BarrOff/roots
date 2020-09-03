@@ -61,28 +61,28 @@ type
     b: T
     depth: int
 
-proc fz2[T, S: SomeFloat](zs: var seq[S], f: proc(x: T): S, a, b: T,
+proc fz2[T, S: SomeFloat](zs: var seq[T], f: proc(x: T): S, a, b: T,
     no_pts: int, k: int = 4)
 
 proc fz[T, S: SomeFloat](f: proc(x: T): S, a, b: T, no_pts: int,
-    k: int = 4): seq[S] =
+    k: int = 4): seq[T] =
   ## A naive approach to find zeros: split (a,b) by n points, look into each for a
   ## zero
   ## * k is oversampling rate for bisection. (It is relatively cheap to check
   ##   for a bracket so we oversample our intervals looking for brackets
   ## * assumes f(a) *not* a zero
   var
-    zs: seq[S]
+    zs: seq[T]
   fz2(zs, f, a, b, no_pts, k)
   return zs
 
-proc fz2[T, S: SomeFloat](zs: var seq[S], f: proc(x: T): S, a, b: T,
+proc fz2[T, S: SomeFloat](zs: var seq[T], f: proc(x: T): S, a, b: T,
     no_pts: int, k: int = 4) =
   let
     n = (no_pts - 1) * k + 1
     l = (b - a) / T(n)
   var
-    pts = newSeq[S](n)
+    pts = newSeq[T](n)
     fs = newSeq[S](n)
     sfs = newSeq[int](n)
 
@@ -317,8 +317,7 @@ proc findZeros*[T, S: SomeFloat](f: proc(x: T): S, a, b: T, noPts: int = 12,
       inds.add(i)
     z1 = z2
 
-  var
-    result = newSeq[T](inds.len)
+  result = newSeq[T](inds.len)
 
   for index, value in inds:
     result[index] = zs[value]
