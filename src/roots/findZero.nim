@@ -98,6 +98,10 @@ type
   Schroeder* = Schroder
   Schröder* = Schroder
 
+
+# declarations
+
+
 proc decideConvergence*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod,
                         CF: CallableFunction[T, S]](M: A, F: CF,
                             state: UnivariateZeroState[T, S],
@@ -116,6 +120,20 @@ proc runBisection*[T, S: SomeFloat, A: AbstractBracketing](N: A,
 # Start library functions
 
 
+proc newState*[T, S: SomeFloat](xn1: T, fxn1: S, fnevals: int = 0, stopped,
+    xConverged, fConverged,
+    convergenceFailed: bool = false): UnivariateZeroState[T, S] =
+  new(result)
+  result.xn1 = xn1
+  result.fxn1 = fxn1
+  result.fnevals = 0
+  result.stopped = stopped
+  result.xConverged = xConverged
+  result.fConverged = fConverged
+  result.convergenceFailed = convergenceFailed
+
+
+
 proc incfn*[T, S: SomeFloat](o: UnivariateZeroState[T, S], k = 1) =
   o.fnevals += k
 proc incsteps*[T, S: SomeFloat](o: UnivariateZeroState[T, S], k = 1) =
@@ -129,14 +147,7 @@ proc initState*[T, S: SomeFloat, A: AbstractNonSecant, CF: CallableFunction[T,
     fnevals = 1
     fx1 = fs.f(x1)
 
-  new(result)
-  result.xn1 = x1
-  result.fxn1 = fx1
-  result.fnevals = fnevals
-  result.stopped = false
-  result.xConverged = false
-  result.fConverged = false
-  result.convergenceFailed = false
+  result = newState(x1, fx1, fnevals)
 
 proc initState*[T, S: SomeFloat, A: AbstractNonSecant](methodes: A, fs: proc(
     a: T): S, x: SomeNumber): UnivariateZeroState[T, S] =
@@ -146,14 +157,7 @@ proc initState*[T, S: SomeFloat, A: AbstractNonSecant](methodes: A, fs: proc(
     fnevals = 1
     fx1 = fs(x1)
 
-  new(result)
-  result.xn1 = x1
-  result.fxn1 = fx1
-  result.fnevals = fnevals
-  result.stopped = false
-  result.xConverged = false
-  result.fConverged = false
-  result.convergenceFailed = false
+  result = newState(x1, fx1, fnevals)
 
 proc initState*[T, S: SomeFloat](state: UnivariateZeroState[T, S], x1, x0: T,
     m: seq[T], y1, y0: S, fm: seq[S]) =
@@ -271,19 +275,23 @@ proc defaultTolerances*(M: AbstractNonBracketing, T, S: typedesc): (T, T, S, S,
 
   return (xatol, xrtol, atol, rtol, maxevals, maxfnevals, strict)
 
+proc newOption*[T, S: SomeFloat](xabstol, xreltol: T, abstol, reltol: S,
+    maxevals, maxfnevals: int, strict: bool): UnivariateZeroOptions[T, T, S, S] =
+  new(result)
+  result.xabstol = xabstol
+  result.xreltol = xreltol
+  result.abstol = abstol
+  result.reltol = reltol
+  result.maxevals = maxevals
+  result.maxfnevals = maxfnevals
+  result.strict = strict
+
 proc initOptions*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod](M: A,
     state: UnivariateZeroState[T, S]): UnivariateZeroOptions[T, T, S, S] =
   let
     defs = defaultTolerances(M, T, S)
 
-  new(result)
-  result.xabstol = defs[0]
-  result.xreltol = defs[1]
-  result.abstol = defs[2]
-  result.reltol = defs[3]
-  result.maxevals = defs[4]
-  result.maxfnevals = defs[5]
-  result.strict = defs[6]
+  result = newOption(defs[0], defs[1], defs[2], defs[3], defs[4], defs[5], defs[6])
 
 proc initOptions2*[T, S: SomeFloat, A: AbstractUnivariateZeroMethod](
   options: UnivariateZeroOptions[T, T, S, S], M: A) =
